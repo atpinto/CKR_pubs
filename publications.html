@@ -15,6 +15,7 @@ header{background:#163e3d;color:#fff;padding:25px 0}.brand{display:flex;align-it
 .update-panel{padding:18px 20px;background:#e9f1ed;border:1px solid #cfdfd6;border-radius:9px;margin:22px 0 0}.update-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.update-panel p{font-size:13px;margin:10px 0 0;max-width:none}.update-panel .error{color:#944527}progress{display:block;width:100%;height:9px;margin:15px 0 0;accent-color:var(--teal)}[hidden]{display:none!important}.update-help{color:var(--muted)}@media print{.update-panel{display:none!important}}
 
 .brand-logo{display:block;width:auto;height:76px;background:#fff;border-radius:5px}
+.auth-state{display:inline-flex;align-items:center;min-height:38px;color:var(--muted);font-size:12px}.login-error{min-height:22px;color:#944527;font-size:13px;margin:8px 0 0}.password-note{font-size:12px;color:var(--muted);margin-top:12px}
 .inline-edit{border:0;background:transparent;padding:0;color:var(--teal);font-size:12px;text-decoration:underline;font-weight:600}.inline-edit:hover{background:transparent}.data-note{font-weight:600;color:var(--ink)}
 dialog{width:min(760px,calc(100% - 32px));max-height:calc(100vh - 32px);padding:0;border:0;border-radius:12px;box-shadow:0 18px 70px #092b2a55;color:var(--ink)}dialog::backdrop{background:#0d2929aa}.dialog-head{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 24px;background:#fff;border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:23px}.icon-button{border:0;padding:4px 8px;font-size:24px;line-height:1;background:transparent}.editor-body{padding:22px 24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid .wide{grid-column:1/-1}.form-grid label{display:block;font-size:12px;font-weight:650;color:var(--muted)}.form-grid textarea{display:block;width:100%;min-height:82px;resize:vertical;margin-top:6px;padding:10px;border:1px solid #b8c9c0;border-radius:6px;color:var(--ink);font:15px/1.4 inherit}.pmid-row{display:grid;grid-template-columns:1fr auto;align-items:end;gap:9px}.pmid-row button{margin-bottom:0}.form-help{font-size:12px;color:var(--muted);margin:5px 0 0}.fetch-status{min-height:20px;font-size:13px;color:var(--teal);margin:8px 0 0}.dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;background:#fff;border-top:1px solid var(--line)}
 @media(max-width:600px){.brand-logo{height:62px}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.dialog-head,.editor-body,.dialog-actions{padding-left:17px;padding-right:17px}.pmid-row{grid-template-columns:1fr}}
@@ -26,23 +27,27 @@ dialog{width:min(760px,calc(100% - 32px));max-height:calc(100vh - 32px);padding:
 <header><div class="wrap brand"><img class="brand-logo" src="getsitelogo.jpeg" alt="" aria-hidden="true"><div><strong>Centre for Kidney Research</strong><small>Sydney · The Children’s Hospital at Westmead</small></div></div></header>
 <main class="wrap">
 <section class="hero"><div class="hero-top"><div><div class="eyebrow">Research collection</div><h1>Publications</h1><p>Explore the Centre’s publications by author, year, project or programme.</p></div><div class="stamp">Last checked<br><strong id="last-updated">14 September 2026</strong></div></div>
-<div class="update-panel"><div class="update-actions"><button id="reload-csv" type="button" class="primary">Reload latest CSV</button><button id="open-csv" type="button">Open CSV file</button><input id="data-file" type="file" accept=".csv,text/csv" hidden><button id="save-csv" type="button">Download current CSV</button><button id="add-publication" type="button">Add publication</button></div><p id="update-status" role="status" aria-live="polite">Loading publications.csv…</p><p class="update-help"><span class="data-note">Automatic updates:</span> GitHub Actions checks PubMed every Monday at 7:00 am Sydney time and commits the refreshed <code>publications.csv</code>. This page loads the latest committed CSV whenever it opens.</p></div>
+<div class="update-panel"><div class="update-actions"><button id="reload-data" type="button" class="primary">Reload database</button><button id="sign-in" type="button">Editor sign in</button><button id="sign-out" type="button" hidden>Sign out</button><span id="auth-state" class="auth-state">Public read-only access</span><button id="save-csv" type="button">Download CSV backup</button><button id="add-publication" type="button" disabled>Add publication</button></div><p id="update-status" role="status" aria-live="polite">Connecting to the publication database…</p><p class="update-help"><span class="data-note">Live database:</span> approved editors can sign in and save changes immediately. GitHub Actions refreshes PubMed fields every Monday while preserving manually curated associations.</p></div>
 <div class="stats"><div class="stat"><strong id="total-stat">0</strong><span>publication records</span></div><div class="stat"><strong id="year-range">—</strong><span>publication years</span></div><div class="stat"><strong id="matched-stat">0</strong><span>with project/programme associations</span></div></div>
 <div class="filters" role="search" aria-label="Filter publications"><label for="search">Search the collection<input id="search" type="search" placeholder="Title, author, journal or DOI…" autocomplete="off"></label><label for="year">Publication year<select id="year"><option value="">All years</option></select></label><label for="project">Project<select id="project"><option value="">All projects</option></select></label><label for="programme">Programme<select id="programme"><option value="">All programmes</option></select></label></div>
 <div class="filter-bottom"><label class="check"><input type="checkbox" id="associated">Show only records with an association</label><button id="reset" class="text-button" type="button">Clear filters</button></div>
 <p class="notice"><b>Associations can be curated manually.</b> Automatically suggested associations remain labelled as suggestions until a record is edited. This affiliation-based collection may omit papers that do not name CKR.</p>
 </section>
 <section id="results" aria-label="Publication results"><div class="results-bar"><div id="result-count" class="results-count" role="status" aria-live="polite"></div><div class="actions"><select id="sort" aria-label="Sort publications"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="title">Title A–Z</option></select><button id="print" type="button">Print list</button><button id="export" class="primary" type="button">Export to EndNote</button></div></div><p class="print-label">CKR affiliation-based collection · <span id="print-date">14 September 2026</span>. Associations are unconfirmed suggestions.</p><div id="list"></div><div class="pagination"><span id="page-info"></span><div><button type="button" id="prev">Previous</button><button type="button" id="next">Next</button></div></div></section>
-<details class="method"><summary>About this collection &amp; keeping it up to date</summary><div class="method-body"><p><strong>Data file.</strong> The collection contains <span id="coverage-count">0</span> records loaded from <code>publications.csv</code>. Keep that file beside this HTML page. GitHub Pages loads it automatically; when opening the HTML directly from a computer, use <strong>Open CSV file</strong>.</p><p><strong>Automatic updates.</strong> The included GitHub Actions workflow runs every Monday at 7:00 am in the Australia/Sydney timezone. It queries PubMed, refreshes the CSV, preserves manually curated project/programme assignments and commits the result. Use <strong>Reload latest CSV</strong> after an automated run, or reopen the page.</p><p><strong>Manual records and associations.</strong> Use <strong>Add publication</strong> and enter a PMID to populate its citation from PubMed, or fill the fields yourself. Every record has an <strong>Edit record &amp; associations</strong> button. Enter one project or programme per line. Browser edits are not sent to GitHub automatically; download the current CSV and commit it after manual changes.</p><p><strong>CSV format.</strong> The associations are ordinary text in the <code>projects</code> and <code>programmes</code> columns, separated by <code> | </code>. Multi-value citation fields use JSON arrays so commas and semicolons round-trip safely. Spreadsheet applications can open and save the file as UTF-8 CSV.</p><p><strong>Coverage.</strong> The weekly updater uses the Centre/Center for Kidney Research affiliation query and retains only matching Sydney, Westmead, New South Wales or NSW affiliations. Existing records that can no longer be verified are retained with a review label. Manually added non-PubMed records are never removed.</p><p><strong>EndNote.</strong> “Export to EndNote” downloads the currently filtered records as a RIS file. In <a href="https://my.endnote.com" target="_blank" rel="noopener noreferrer">EndNote Online</a>, import it using RefMan RIS. Project and programme assignments are included as searchable keywords.</p><p>Each PubMed record links to its source. A <a id="alert-link" target="_blank" rel="noopener noreferrer">PubMed search alert</a> is also available.</p></div></details>
-<dialog id="editor" aria-labelledby="editor-title"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Add publication</h2><button id="close-editor" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><div class="wide"><div class="pmid-row"><label for="edit-pmid">PubMed ID (optional)<input id="edit-pmid" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 42715707"></label><button id="fetch-pmid" type="button">Populate from PubMed</button></div><p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p></div><label class="wide" for="edit-title">Title *<input id="edit-title" required></label><label for="edit-year">Year *<input id="edit-year" required inputmode="numeric" pattern="[0-9]{4}"></label><label for="edit-journal">Journal<input id="edit-journal"></label><label for="edit-abbreviation">Journal abbreviation<input id="edit-abbreviation"></label><label for="edit-doi">DOI<input id="edit-doi"></label><label class="wide" for="edit-authors">Authors<textarea id="edit-authors" placeholder="One author per line"></textarea></label><label for="edit-volume">Volume<input id="edit-volume"></label><label for="edit-issue">Issue<input id="edit-issue"></label><label for="edit-start-page">Start page or article number<input id="edit-start-page"></label><label for="edit-end-page">End page<input id="edit-end-page"></label><label class="wide" for="edit-affiliations">Affiliations<textarea id="edit-affiliations" placeholder="One affiliation per line"></textarea></label><label class="wide" for="edit-types">Publication types<textarea id="edit-types" placeholder="One type per line"></textarea></label><label for="edit-projects">Projects<textarea id="edit-projects" placeholder="One project per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label><label for="edit-programmes">Programmes<textarea id="edit-programmes" placeholder="One programme per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label></div></div><div class="dialog-actions"><button id="cancel-editor" type="button">Cancel</button><button class="primary" type="submit">Save record</button></div></form></dialog>
+<details class="method"><summary>About this collection &amp; keeping it up to date</summary><div class="method-body"><p><strong>Live data.</strong> The collection contains <span id="coverage-count">0</span> records loaded from a Supabase PostgreSQL database. The committed <code>publications.csv</code> remains a portable backup.</p><p><strong>Automatic updates.</strong> The GitHub Actions workflow runs every Monday at 7:00 am in the Australia/Sydney timezone. It queries PubMed, refreshes the database and CSV backup, and preserves manually curated project/programme assignments.</p><p><strong>Manual records and associations.</strong> Approved editors sign in with email and password. Use <strong>Add publication</strong> and enter a PMID to populate its citation from PubMed, or fill the fields yourself. Every record then has an <strong>Edit record &amp; associations</strong> button. Enter one project or programme per line. Clicking <strong>Save record</strong> writes the change directly to the database and records it in the audit history.</p><p><strong>CSV backup.</strong> The associations are text in the <code>projects</code> and <code>programmes</code> columns, separated by <code> | </code>. Multi-value citation fields use JSON arrays so commas and semicolons round-trip safely.</p><p><strong>Coverage.</strong> The weekly updater uses the Centre/Center for Kidney Research affiliation query and retains only matching Sydney, Westmead, New South Wales or NSW affiliations. Existing records that can no longer be verified are retained with a review label. Manually added non-PubMed records are never removed.</p><p><strong>EndNote.</strong> “Export to EndNote” downloads the currently filtered records as a RIS file. In <a href="https://my.endnote.com" target="_blank" rel="noopener noreferrer">EndNote Online</a>, import it using RefMan RIS. Project and programme assignments are included as searchable keywords.</p><p>Each PubMed record links to its source. A <a id="alert-link" target="_blank" rel="noopener noreferrer">PubMed search alert</a> is also available.</p></div></details>
+<dialog id="login-dialog" aria-labelledby="login-title"><form id="login-form"><div class="dialog-head"><h2 id="login-title">Editor sign in</h2><button id="close-login" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><label class="wide" for="login-email">Email<input id="login-email" type="email" autocomplete="username" required></label><label class="wide" for="login-password">Password<input id="login-password" type="password" autocomplete="current-password" required></label></div><p id="login-error" class="login-error" role="alert"></p><p class="password-note">Only accounts approved as publication editors can save changes.</p></div><div class="dialog-actions"><button id="cancel-login" type="button">Cancel</button><button id="submit-login" class="primary" type="submit">Sign in</button></div></form></dialog>
+<dialog id="editor" aria-labelledby="editor-title"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Add publication</h2><button id="close-editor" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><div class="wide"><div class="pmid-row"><label for="edit-pmid">PubMed ID (optional)<input id="edit-pmid" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 42715707"></label><button id="fetch-pmid" type="button">Populate from PubMed</button></div><p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p></div><label class="wide" for="edit-title">Title *<input id="edit-title" required></label><label for="edit-year">Year *<input id="edit-year" required inputmode="numeric" pattern="[0-9]{4}"></label><label for="edit-journal">Journal<input id="edit-journal"></label><label for="edit-abbreviation">Journal abbreviation<input id="edit-abbreviation"></label><label for="edit-doi">DOI<input id="edit-doi"></label><label class="wide" for="edit-authors">Authors<textarea id="edit-authors" placeholder="One author per line"></textarea></label><label for="edit-volume">Volume<input id="edit-volume"></label><label for="edit-issue">Issue<input id="edit-issue"></label><label for="edit-start-page">Start page or article number<input id="edit-start-page"></label><label for="edit-end-page">End page<input id="edit-end-page"></label><label class="wide" for="edit-affiliations">Affiliations<textarea id="edit-affiliations" placeholder="One affiliation per line"></textarea></label><label class="wide" for="edit-types">Publication types<textarea id="edit-types" placeholder="One type per line"></textarea></label><label for="edit-projects">Projects<textarea id="edit-projects" placeholder="One project per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label><label for="edit-programmes">Programmes<textarea id="edit-programmes" placeholder="One programme per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label></div></div><div class="dialog-actions"><button id="cancel-editor" type="button">Cancel</button><button id="save-record" class="primary" type="submit">Save record</button></div></form></dialog>
 <footer class="foot"><span>Centre for Kidney Research · Publication register</span><span>Public metadata from PubMed · Last checked <span id="footer-date">14 September 2026</span></span></footer>
 <noscript><p>This searchable collection requires JavaScript. Enable it in your browser to view the publication records. No internet connection is needed to search the collection.</p></noscript>
 </main>
+<script src="config.js"></script>
 <script>
 'use strict';
 
 const $ = id => document.getElementById(id);
 const DATA_FILE = 'publications.csv';
+const DB_CONFIG = window.CKR_CONFIG || {};
+const SESSION_KEY = 'ckr-supabase-session';
 const CSV_COLUMNS = [
   'id', 'pmid', 'title', 'authors', 'year', 'journal', 'abbreviation', 'volume', 'issue',
   'start_page', 'end_page', 'doi', 'pmcid', 'issn', 'language', 'affiliations',
@@ -70,9 +75,11 @@ let collectionMeta = { checkedAt: new Date(0).toISOString() };
 let filtered = [];
 let page = 1;
 let printing = false;
-let dirty = false;
 let editingId = null;
 let fetchedDraft = null;
+let authSession = null;
+let editorAccess = false;
+let dataSource = 'none';
 
 function el(tag, cls, text) {
   const node = document.createElement(tag);
@@ -105,6 +112,126 @@ function dateLabel(iso) {
 function status(message, error = false) {
   $('update-status').textContent = message;
   $('update-status').classList.toggle('error', error);
+}
+
+function databaseConfigured() {
+  return /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(DB_CONFIG.supabaseUrl || '') &&
+    DB_CONFIG.supabasePublishableKey && DB_CONFIG.supabasePublishableKey !== 'YOUR_PUBLISHABLE_KEY';
+}
+
+function storeSession(session) {
+  authSession = session || null;
+  if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  else sessionStorage.removeItem(SESSION_KEY);
+}
+
+function restoreSession() {
+  try { authSession = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); }
+  catch { authSession = null; }
+}
+
+async function databaseRequest(path, { method = 'GET', body = null, authenticated = false, prefer = '' } = {}) {
+  if (!databaseConfigured()) throw new Error('The database has not been configured yet.');
+  if (authenticated) await refreshSessionIfNeeded();
+  const headers = { apikey: DB_CONFIG.supabasePublishableKey, Accept: 'application/json' };
+  if (authenticated) {
+    if (!authSession?.access_token) throw new Error('Editor sign-in is required.');
+    headers.Authorization = `Bearer ${authSession.access_token}`;
+  }
+  if (body !== null) headers['Content-Type'] = 'application/json';
+  if (prefer) headers.Prefer = prefer;
+  const response = await fetch(`${DB_CONFIG.supabaseUrl}${path}`, {
+    method,
+    headers,
+    body: body === null ? null : JSON.stringify(body)
+  });
+  if (!response.ok) {
+    let detail = '';
+    try { detail = (await response.json()).message || ''; } catch { detail = await response.text(); }
+    throw new Error(detail || `Database request failed (HTTP ${response.status}).`);
+  }
+  return response.status === 204 ? null : response.json();
+}
+
+async function refreshSessionIfNeeded() {
+  if (!authSession?.refresh_token) throw new Error('Editor sign-in is required.');
+  if ((authSession.expires_at || 0) * 1000 > Date.now() + 60000) return;
+  const response = await fetch(`${DB_CONFIG.supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
+    method: 'POST',
+    headers: { apikey: DB_CONFIG.supabasePublishableKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: authSession.refresh_token })
+  });
+  if (!response.ok) {
+    storeSession(null);
+    editorAccess = false;
+    updateAuthUI();
+    throw new Error('Your editor session has expired. Please sign in again.');
+  }
+  const session = await response.json();
+  session.expires_at = Math.floor(Date.now() / 1000) + Number(session.expires_in || 3600);
+  storeSession(session);
+}
+
+async function signInEditor(email, password) {
+  const response = await fetch(`${DB_CONFIG.supabaseUrl}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: DB_CONFIG.supabasePublishableKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error_description || result.msg || 'Sign-in failed.');
+  result.expires_at = Math.floor(Date.now() / 1000) + Number(result.expires_in || 3600);
+  storeSession(result);
+  const approved = await databaseRequest('/rest/v1/rpc/is_publication_editor', { method: 'POST', authenticated: true, body: {} });
+  if (approved !== true) {
+    await signOutEditor();
+    throw new Error('This account is not approved as a publication editor.');
+  }
+  editorAccess = true;
+  updateAuthUI();
+}
+
+async function signOutEditor() {
+  const token = authSession?.access_token;
+  storeSession(null);
+  editorAccess = false;
+  updateAuthUI();
+  if (token && databaseConfigured()) {
+    fetch(`${DB_CONFIG.supabaseUrl}/auth/v1/logout`, {
+      method: 'POST',
+      headers: { apikey: DB_CONFIG.supabasePublishableKey, Authorization: `Bearer ${token}` }
+    }).catch(() => {});
+  }
+}
+
+async function restoreEditorAccess() {
+  restoreSession();
+  if (!authSession) return updateAuthUI();
+  try {
+    await refreshSessionIfNeeded();
+    const approved = authSession.user?.id
+      ? await databaseRequest('/rest/v1/rpc/is_publication_editor', { method: 'POST', authenticated: true, body: {} })
+      : false;
+    editorAccess = approved === true;
+    if (!editorAccess) storeSession(null);
+  } catch {
+    storeSession(null);
+    editorAccess = false;
+  }
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  $('sign-in').hidden = editorAccess;
+  $('sign-out').hidden = !editorAccess;
+  $('sign-in').disabled = !databaseConfigured();
+  $('auth-state').textContent = !databaseConfigured()
+    ? 'Database setup pending'
+    : editorAccess
+    ? `Signed in as ${authSession?.user?.email || 'editor'}`
+    : 'Public read-only access';
+  $('add-publication').disabled = !editorAccess || !records.length || dataSource !== 'database';
+  if (records.length) render();
 }
 
 function parseCSV(text) {
@@ -210,6 +337,25 @@ function rowToRecord(row, index) {
   };
 }
 
+function databaseRowToRecord(row, index) {
+  const record = rowToRecord({
+    ...row,
+    authors: JSON.stringify(row.authors || []),
+    affiliations: JSON.stringify(row.affiliations || []),
+    publication_types: JSON.stringify(row.publication_types || []),
+    electronic_dates: JSON.stringify(row.electronic_dates || []),
+    corrections: JSON.stringify(row.corrections || []),
+    projects: (row.projects || []).join(' | '),
+    programmes: (row.programmes || []).join(' | '),
+    project_evidence: JSON.stringify(row.project_evidence || {}),
+    programme_evidence: JSON.stringify(row.programme_evidence || {}),
+    source_keywords: JSON.stringify(row.source_keywords || []),
+    affiliation_review: row.affiliation_review ? 'true' : 'false'
+  }, index);
+  record.collection_checked_at = row.collection_checked_at || '';
+  return record;
+}
+
 function validateRecords(value) {
   if (!value.length) throw new Error('The CSV contains no records.');
   const ids = new Set();
@@ -228,10 +374,71 @@ function loadCSVText(text, sourceLabel) {
   records.splice(0, records.length, ...loaded);
   const checkedAt = loaded.map(record => record.collection_checked_at).find(Boolean);
   collectionMeta = { checkedAt: checkedAt || new Date().toISOString() };
-  dirty = false;
+  dataSource = 'csv';
   rebuildCollection();
   setInterfaceEnabled(true);
-  status(`Loaded ${records.length.toLocaleString()} records from ${sourceLabel}.`);
+  status(`Loaded ${records.length.toLocaleString()} records from ${sourceLabel} as a read-only backup.`);
+}
+
+function databaseRecord(record) {
+  return {
+    id: record.id,
+    pmid: record.pmid || '',
+    title: record.title,
+    authors: record.authors || [],
+    year: record.year,
+    journal: record.journal || '',
+    abbreviation: record.abbreviation || '',
+    volume: record.volume || '',
+    issue: record.issue || '',
+    start_page: record.start_page || '',
+    end_page: record.end_page || '',
+    doi: record.doi || '',
+    pmcid: record.pmcid || '',
+    issn: record.issn || '',
+    language: record.language || '',
+    affiliations: record.affiliations || [],
+    publication_types: record.publication_types || [],
+    publication_date: record.publication_date || '',
+    electronic_dates: record.electronic_dates || [],
+    corrections: record.corrections || [],
+    projects: record.projects || [],
+    programmes: record.programmes || [],
+    project_evidence: record.project_evidence || {},
+    programme_evidence: record.programme_evidence || {},
+    projects_source: record.projects_source || 'suggested',
+    programmes_source: record.programmes_source || 'suggested',
+    source_keywords: record.source_keywords || [],
+    affiliation_review: Boolean(record.affiliation_review),
+    record_source: record.record_source || (record.pmid ? 'PubMed' : 'Manual'),
+    collection_checked_at: record.collection_checked_at || collectionMeta.checkedAt || null
+  };
+}
+
+async function fetchDatabaseRecords() {
+  const loaded = [];
+  const columns = CSV_COLUMNS.join(',');
+  for (let offset = 0; offset < 1000000; offset += 1000) {
+    const query = new URLSearchParams({ select: columns, order: 'year.desc,id.desc', limit: '1000', offset: String(offset) });
+    const pageRows = await databaseRequest(`/rest/v1/publications?${query}`);
+    if (!Array.isArray(pageRows)) throw new Error('The database returned an invalid response.');
+    loaded.push(...pageRows);
+    if (pageRows.length < 1000) break;
+  }
+  if (!loaded.length) throw new Error('The publication database is empty.');
+  return loaded.map(databaseRowToRecord);
+}
+
+async function saveDatabaseRecord(record) {
+  const query = new URLSearchParams({ on_conflict: 'id' });
+  const saved = await databaseRequest(`/rest/v1/publications?${query}`, {
+    method: 'POST',
+    authenticated: true,
+    prefer: 'resolution=merge-duplicates,return=representation',
+    body: databaseRecord(record)
+  });
+  if (!Array.isArray(saved) || !saved.length) throw new Error('The database did not return the saved record.');
+  return databaseRowToRecord(saved[0], 0);
 }
 
 function csvCell(value) {
@@ -277,16 +484,16 @@ function download(content, filename, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function saveCSV(message = 'Downloaded publications.csv. Replace the copy in your GitHub repository, then commit the change.') {
+function saveCSV(message = 'Downloaded a CSV backup of the current publication data.') {
   download(makeCSV(), DATA_FILE, 'text/csv;charset=utf-8');
-  dirty = false;
   status(message);
 }
 
 function setInterfaceEnabled(enabled) {
-  for (const id of ['reload-csv', 'save-csv', 'add-publication', 'search', 'year', 'project', 'programme', 'associated', 'sort', 'print', 'export']) {
+  for (const id of ['reload-data', 'save-csv', 'search', 'year', 'project', 'programme', 'associated', 'sort', 'print', 'export']) {
     $(id).disabled = !enabled;
   }
+  $('add-publication').disabled = !enabled || !editorAccess || dataSource !== 'database';
 }
 
 function addOption(select, value, label) {
@@ -390,10 +597,12 @@ function publication(record) {
   if (record.pmid) links.append(link('PubMed ↗', `https://pubmed.ncbi.nlm.nih.gov/${record.pmid}/`));
   if (record.doi) links.append(link('DOI ↗', `https://doi.org/${encodeURI(record.doi)}`));
   links.append(el('span', '', record.pmid ? `PMID ${record.pmid}` : `Local record ${record.id}`));
-  const edit = el('button', 'inline-edit', 'Edit record & associations');
-  edit.type = 'button';
-  edit.addEventListener('click', () => openEditor(record));
-  links.append(edit);
+  if (editorAccess && dataSource === 'database') {
+    const edit = el('button', 'inline-edit', 'Edit record & associations');
+    edit.type = 'button';
+    edit.addEventListener('click', () => openEditor(record));
+    links.append(edit);
+  }
   body.append(links);
   const details = el('details', 'details');
   details.append(el('summary', '', 'Authors & record details'));
@@ -663,6 +872,11 @@ function fillEditor(record) {
 }
 
 function openEditor(record = null) {
+  if (!editorAccess || dataSource !== 'database') {
+    $('login-error').textContent = 'Sign in with an approved editor account to change the database.';
+    $('login-dialog').showModal();
+    return;
+  }
   editingId = record?.id || null;
   fetchedDraft = null;
   $('editor-title').textContent = record ? 'Edit publication' : 'Add publication';
@@ -699,7 +913,7 @@ async function fetchEditorPMID() {
   }
 }
 
-function saveEditor(event) {
+async function saveEditor(event) {
   event.preventDefault();
   const pmid = $('edit-pmid').value.trim();
   if (pmid && !/^\d+$/.test(pmid)) return status('PMID must contain digits only.', true);
@@ -738,35 +952,75 @@ function saveEditor(event) {
     $('fetch-status').textContent = 'Title and year are required.';
     return;
   }
-  if (existing) Object.assign(existing, record);
-  else records.push(record);
-  dirty = true;
-  collectionMeta.checkedAt = new Date().toISOString();
-  $('editor').close();
-  rebuildCollection();
-  status(`${existing ? 'Updated' : 'Added'} “${record.title}”. Download publications.csv to keep this change.`);
+  $('save-record').disabled = true;
+  $('fetch-status').textContent = 'Saving to the database…';
+  try {
+    const saved = await saveDatabaseRecord(record);
+    if (existing) Object.assign(existing, saved);
+    else records.push(saved);
+    $('editor').close();
+    rebuildCollection();
+    status(`${existing ? 'Updated' : 'Added'} “${saved.title}”. The change was saved automatically.`);
+  } catch (error) {
+    $('fetch-status').textContent = `Could not save: ${error.message}`;
+  } finally {
+    $('save-record').disabled = false;
+  }
 }
 
-async function loadDefaultCSV() {
-  setInterfaceEnabled(false);
-  render();
+async function loadCSVBackup(databaseError = '') {
   if (location.protocol === 'file:') {
-    status('This page was opened as a local file. Choose publications.csv to load the collection.', true);
+    status('Run this page through a web server to load its CSV backup.', true);
     return;
   }
-  status('Loading publications.csv…');
+  const response = await fetch(`${DATA_FILE}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!response.ok) throw new Error(`CSV backup returned HTTP ${response.status}`);
+  loadCSVText(await response.text(), DATA_FILE);
+  if (databaseError) status(`Database unavailable (${databaseError}). Loaded the CSV backup in read-only mode.`, true);
+}
+
+async function loadData() {
+  setInterfaceEnabled(false);
+  render();
+  status(databaseConfigured() ? 'Loading the publication database…' : 'Database setup pending; loading the CSV backup…');
   try {
-    const response = await fetch(`${DATA_FILE}?v=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    loadCSVText(await response.text(), DATA_FILE);
+    if (!databaseConfigured()) return await loadCSVBackup();
+    const loaded = await fetchDatabaseRecords();
+    validateRecords(loaded);
+    records.splice(0, records.length, ...loaded);
+    const checkedAt = loaded.map(record => record.collection_checked_at).find(Boolean);
+    collectionMeta = { checkedAt: checkedAt || new Date().toISOString() };
+    dataSource = 'database';
+    rebuildCollection();
+    setInterfaceEnabled(true);
+    updateAuthUI();
+    status(`Loaded ${records.length.toLocaleString()} records from the live database.`);
   } catch (error) {
-    status(`Could not load publications.csv (${error.message}). Confirm it is beside this HTML file, or choose it manually.`, true);
+    try { await loadCSVBackup(error.message); }
+    catch (backupError) { status(`Could not load the database or CSV backup: ${backupError.message}`, true); }
   }
 }
 
-async function reloadCSV() {
-  if (dirty && !window.confirm('Reloading will discard changes that have not been downloaded. Continue?')) return;
-  await loadDefaultCSV();
+async function submitLogin(event) {
+  event.preventDefault();
+  $('submit-login').disabled = true;
+  $('login-error').textContent = 'Signing in…';
+  try {
+    await signInEditor($('login-email').value.trim(), $('login-password').value);
+    $('login-form').reset();
+    $('login-error').textContent = '';
+    $('login-dialog').close();
+    status('Editor access enabled. Changes will be saved directly to the database.');
+  } catch (error) {
+    $('login-error').textContent = error.message;
+  } finally {
+    $('submit-login').disabled = false;
+  }
+}
+
+async function initialize() {
+  await restoreEditorAccess();
+  await loadData();
 }
 
 $('alert-link').href = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + encodeURIComponent('("Centre for Kidney Research"[Affiliation] OR "Center for Kidney Research"[Affiliation]) AND (Sydney[Affiliation] OR Westmead[Affiliation] OR "New South Wales"[Affiliation])');
@@ -785,28 +1039,20 @@ $('export').addEventListener('click', exportRIS);
 $('print').addEventListener('click', () => window.print());
 window.addEventListener('beforeprint', () => { printing = true; render(); });
 window.addEventListener('afterprint', () => { printing = false; render(); });
-window.addEventListener('beforeunload', event => {
-  if (!dirty) return;
-  event.preventDefault();
-  event.returnValue = '';
-});
-$('reload-csv').addEventListener('click', reloadCSV);
+$('reload-data').addEventListener('click', loadData);
 $('save-csv').addEventListener('click', () => saveCSV());
 $('add-publication').addEventListener('click', () => openEditor());
-$('open-csv').addEventListener('click', () => $('data-file').click());
-$('data-file').addEventListener('change', async event => {
-  const file = event.target.files[0];
-  if (!file) return;
-  try { loadCSVText(await file.text(), file.name); }
-  catch (error) { status(`Could not load ${file.name}: ${error.message}`, true); }
-  event.target.value = '';
-});
+$('sign-in').addEventListener('click', () => { $('login-error').textContent = ''; $('login-dialog').showModal(); });
+$('sign-out').addEventListener('click', async () => { await signOutEditor(); status('Signed out. The database remains available in read-only mode.'); });
+$('login-form').addEventListener('submit', submitLogin);
+$('close-login').addEventListener('click', () => $('login-dialog').close());
+$('cancel-login').addEventListener('click', () => $('login-dialog').close());
 $('editor-form').addEventListener('submit', saveEditor);
 $('fetch-pmid').addEventListener('click', fetchEditorPMID);
 $('close-editor').addEventListener('click', () => $('editor').close());
 $('cancel-editor').addEventListener('click', () => $('editor').close());
 
-loadDefaultCSV();
+initialize();
 
 </script>
 </body>
