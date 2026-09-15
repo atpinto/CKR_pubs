@@ -138,6 +138,7 @@ revoke all on private.publication_editors from anon, authenticated;
 revoke all on public.publication_history from anon, authenticated;
 grant select on public.publications to anon, authenticated;
 grant insert, update, delete on public.publications to authenticated;
+grant select, insert, update, delete on public.publications to service_role;
 grant usage on schema private to authenticated;
 grant select on private.publication_editors to authenticated;
 grant select on public.publication_history to authenticated;
