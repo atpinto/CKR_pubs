@@ -24,7 +24,7 @@ import urllib.parse
 import urllib.request
 from typing import Callable, Mapping, Sequence
 
-from scholar_citations import (
+from citations_common import (
     MAX_CONSECUTIVE_FAILURES,
     CitationBlocked,
     CitationLookupError,

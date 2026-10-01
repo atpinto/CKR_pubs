@@ -12,7 +12,7 @@ import urllib.error
 from unittest import mock
 
 import scopus_citations as sc
-from scholar_citations import CitationBlocked, CitationLookupError
+from citations_common import CitationBlocked, CitationLookupError
 
 
 def entry(doi: str = "", pmid: str = "", count: object = 5, url: str = "https://www.scopus.com/inward/citedby.uri?x=1") -> dict:

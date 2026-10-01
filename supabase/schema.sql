@@ -42,13 +42,11 @@ create table if not exists public.publications (
   constraint publications_year_four_digits check (year ~ '^[0-9]{4}$')
 );
 
--- Google Scholar citation counts. Added after the initial release, so this is an
--- ALTER rather than part of the CREATE above: re-running it on an existing database
--- adds the columns once and changes nothing else. citations is null until checked.
+-- Google Scholar citation counts were removed. This drops the old columns (and any saved counts)
+-- if they exist; it does nothing on a database that never had them.
 alter table public.publications
-  add column if not exists citations integer
-    constraint publications_citations_nonnegative check (citations is null or citations >= 0),
-  add column if not exists citations_checked_at timestamptz;
+  drop column if exists citations,
+  drop column if exists citations_checked_at;
 
 -- Scopus citation counts (Elsevier API). scopus_url is Scopus's own "cited by" link, which
 -- Elsevier's terms require next to a displayed count. All three are null until checked.
