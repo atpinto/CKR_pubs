@@ -628,6 +628,11 @@ function publication(record) {
   const links = el('div', 'record-bottom');
   if (record.pmid) links.append(link('PubMed ↗', `https://pubmed.ncbi.nlm.nih.gov/${record.pmid}/`));
   if (record.doi) links.append(link('DOI ↗', `https://doi.org/${encodeURI(record.doi)}`));
+  if (record.title) {
+    const scholar = link('Google Scholar ↗', `https://scholar.google.com/scholar?q=${encodeURIComponent(`"${record.title.replace(/[.\s]+$/, '').replace(/"/g, '')}"`)}`);
+    scholar.title = 'Search Google Scholar for this exact title';
+    links.append(scholar);
+  }
   if (record.scopus_citations !== null && record.scopus_url) {
     const scopus = link(`Cited by ${record.scopus_citations.toLocaleString()} in Scopus ↗`, record.scopus_url);
     scopus.className = 'cited-by';
