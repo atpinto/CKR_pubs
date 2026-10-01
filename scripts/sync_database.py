@@ -223,6 +223,65 @@ def refresh_citation_counts(
         write_csv(csv_path, fieldnames, rows)
 
 
+def citation_limits(args: argparse.Namespace) -> tuple[int, float]:
+    """Lookups allowed and minutes allowed, from the command line, then the environment, then defaults."""
+    max_lookups = args.citation_max_lookups
+    if max_lookups is None:
+        max_lookups = int(number_setting(os.environ, "CITATION_MAX_LOOKUPS", DEFAULT_MAX_LOOKUPS, 0))
+    time_limit = args.citation_time_limit_minutes
+    if time_limit is None:
+        time_limit = number_setting(os.environ, "CITATION_TIME_LIMIT_MINUTES", DEFAULT_TIME_LIMIT_MINUTES, 1)
+    return max_lookups, time_limit
+
+
+def run_citations_only(client: SupabaseClient, args: argparse.Namespace) -> int:
+    """Look up citation counts only: no PubMed, and no changes to the CSV backup.
+
+    Meant for running on your own computer when Google Scholar blocks GitHub's servers.
+    The next weekly run exports these counts into the CSV backup.
+    """
+    current = client.fetch_publications()
+    if not current:
+        raise RuntimeError("The database is empty. Run this command once with --seed first.")
+    if not client.has_citation_columns:
+        raise RuntimeError("The database has no citation columns yet. Run supabase/schema.sql in the Supabase SQL editor.")
+    rows = [
+        {
+            "id": str(record["id"]),
+            "title": str(record.get("title") or ""),
+            "year": str(record.get("year") or ""),
+            "citations_checked_at": database_value_to_csv("citations_checked_at", record.get("citations_checked_at")),
+        }
+        for record in current
+    ]
+    max_lookups, time_limit = citation_limits(args)
+    saved = 0
+
+    def store(row: dict[str, str], count: int | None, checked_at: str) -> None:
+        nonlocal saved
+        client.update_citations(row["id"], count, checked_at)
+        saved += 1
+        shown = "not found on Scholar" if count is None else f"cited by {count}"
+        print(f"  [{saved}] {shown}: {row['title'][:70]}", flush=True)
+
+    provider = make_provider()
+    print(f"Looking up citations with {provider.name}: up to {max_lookups} records, stopping after {time_limit:g} minutes.")
+    stats = refresh_citations(
+        rows, provider, max_lookups=max_lookups, time_limit_seconds=time_limit * 60, apply=store
+    )
+    checked = sum(1 for row in rows if row["citations_checked_at"]) + int(stats["looked_up"])
+    print(
+        f"Done: {stats['looked_up']} of {stats['planned']} lookups saved; "
+        f"{stats['counted']} counted, {stats['not_found']} not found, {stats['failed']} failed. "
+        f"{checked} of {len(rows)} records have now been checked at least once."
+    )
+    if stats["stopped"]:
+        print(f"Stopped early: {stats['stopped']}", file=sys.stderr)
+        if not stats["looked_up"]:
+            return 1
+    return 0
+
+
 def run_citation_stage(client: SupabaseClient, args: argparse.Namespace) -> None:
     """Best-effort citation refresh. Problems become warnings and never fail the sync."""
     if args.no_citations:
@@ -235,12 +294,7 @@ def run_citation_stage(client: SupabaseClient, args: argparse.Namespace) -> None
         )
         return
     try:
-        max_lookups = args.citation_max_lookups
-        if max_lookups is None:
-            max_lookups = int(number_setting(os.environ, "CITATION_MAX_LOOKUPS", DEFAULT_MAX_LOOKUPS, 0))
-        time_limit = args.citation_time_limit_minutes
-        if time_limit is None:
-            time_limit = number_setting(os.environ, "CITATION_TIME_LIMIT_MINUTES", DEFAULT_TIME_LIMIT_MINUTES, 1)
+        max_lookups, time_limit = citation_limits(args)
         stats = refresh_citation_counts(client, args.csv, max_lookups, time_limit)
     except Exception as error:
         print(f"::warning::Citation update skipped: {error}")
@@ -267,6 +321,12 @@ def main() -> int:
         help="Skip the Google Scholar citation refresh for this run",
     )
     parser.add_argument(
+        "--citations-only",
+        action="store_true",
+        help="Only look up Google Scholar citation counts: no PubMed update and no CSV changes "
+        "(for running on your own computer)",
+    )
+    parser.add_argument(
         "--citation-max-lookups",
         type=int,
         default=None,
@@ -283,6 +343,10 @@ def main() -> int:
 
     try:
         client = SupabaseClient()
+        if args.citations_only:
+            if args.seed or args.no_citations:
+                raise RuntimeError("--citations-only cannot be combined with --seed or --no-citations.")
+            return run_citations_only(client, args)
         if args.seed:
             records = read_database_import(args.csv)
             if not records:
