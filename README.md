@@ -101,7 +101,37 @@ Until this is run, the website and the weekly update work exactly as before, and
 
 **How many records per run.** A run looks up at most 100 records (`CITATION_MAX_LOOKUPS`) and stops after 60 minutes (`CITATION_TIME_LIMIT_MINUTES`). Records that have never been checked go first, newest first, then the records with the oldest check, so the whole collection is covered over several weeks. At 100 per run, a first pass over about 1,350 records takes roughly 14 weekly runs. For a faster first pass, run the workflow manually with a larger **Google Scholar lookups** value; this is only realistic with SerpApi.
 
-**Trying it.** Select **Actions → Update publications from PubMed → Run workflow**, set **Google Scholar lookups** to `10`, and read the `Citation counts (…)` line in the log. If the log warns that Google Scholar asked for a CAPTCHA, direct mode will not work from GitHub Actions; use SerpApi. Tick **Skip the Google Scholar citation refresh** to run the PubMed update alone.
+**Trying it.** Select **Actions → Update publications from PubMed → Run workflow**, set **Google Scholar lookups** to `10`, and read the `Citation counts (…)` line in the log. If the log warns that Google Scholar asked for a CAPTCHA or refused the request (HTTP 403), direct mode will not work from GitHub Actions; use SerpApi or run the lookups on your own computer (next section). Tick **Skip the Google Scholar citation refresh** to run the PubMed update alone.
+
+### Running the citation lookups on your own computer
+
+Google Scholar usually accepts requests from an ordinary home or office connection even when it blocks GitHub's servers. `--citations-only` looks up counts and saves them to the database, and does nothing else: no PubMed update, and `publications.csv` is not touched. The next weekly run copies the counts into the CSV backup.
+
+You need a recent Python 3 (the weekly workflow uses 3.13; this was tested on 3.11) and a copy of this repository. In Supabase, open **Project Settings → API Keys** and copy the **secret key** (not the publishable key). Treat it like a password: keep it out of any file in the repository and out of chat messages.
+
+macOS or Linux:
+
+```bash
+export SUPABASE_URL='https://PROJECT.supabase.co'
+export SUPABASE_SECRET_KEY='SECRET_KEY'
+python3 scripts/sync_database.py --citations-only --citation-max-lookups 50
+```
+
+Windows PowerShell:
+
+```powershell
+$env:SUPABASE_URL = 'https://PROJECT.supabase.co'
+$env:SUPABASE_SECRET_KEY = 'SECRET_KEY'
+python scripts/sync_database.py --citations-only --citation-max-lookups 50
+```
+
+The values last only for that terminal window. Each lookup prints a line as it is saved, with a pause of about 10 seconds between lookups, so 50 records take roughly 10 minutes. The script stops by itself if Google asks for a CAPTCHA, and records already saved are kept.
+
+- Start with 30 to 50 records. If Google blocks you, wait a few hours, or until the next day, before trying again, and do not run several copies at once.
+- Run it again later to continue. Each run picks up the records that have never been checked, then the stalest counts.
+- `--citation-max-lookups` sets how many records to look up. To go slower, set `CITATION_DELAY_SECONDS` to a larger number such as `20`.
+- If you also add a `SERPAPI_API_KEY`, the same command uses SerpApi instead of contacting Google directly.
+- To stop the weekly GitHub run from trying (and warning about) Google Scholar, add a repository variable `CITATION_MAX_LOOKUPS` set to `0`.
 
 **Matching.** A count is saved only when one of the top Google Scholar results has the same title as the record (ignoring case, punctuation and accents). If none match, the record is marked as checked without a count and tried again in a later cycle. Counts can differ from other databases, and an edited title may need a later refresh.
 
