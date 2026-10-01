@@ -37,8 +37,12 @@ from citations_common import (
 SCOPUS_COLUMNS = ["scopus_citations", "scopus_citations_checked_at", "scopus_url"]
 SEARCH_URL = "https://api.elsevier.com/content/search/scopus"
 USER_AGENT = "CKR-Publication-Register/1.0"
-BATCH_SIZE = 25
-DEFAULT_MAX_LOOKUPS = 2000  # records per run; a full pass of the collection is about 55 requests
+# Without institutional entitlement Scopus rejects count > 25 (HTTP 400 "Exceeds the maximum number allowed
+# for the service level"), so each request asks for 25 results and covers 12 records, leaving room for
+# the occasional extra match.
+BATCH_SIZE = 12
+MAX_RESULTS = 25
+DEFAULT_MAX_LOOKUPS = 2000  # records per run; a full pass of the collection is about 115 requests
 DEFAULT_TIME_LIMIT_MINUTES = 30.0
 DEFAULT_DELAY_SECONDS = 0.3  # the API allows about 9 requests a second
 SAFE_DOI = re.compile(r"[A-Za-z0-9./_\-]+")
@@ -122,7 +126,7 @@ class ScopusClient:
         if not wanted:
             return {}
         query = " OR ".join(f"{kind}({value})" for kind, value in wanted.values())
-        params = urllib.parse.urlencode({"query": query, "count": str(min(200, 2 * len(wanted)))})
+        params = urllib.parse.urlencode({"query": query, "count": str(MAX_RESULTS)})
         headers = {"X-ELS-APIKey": self.api_key, "Accept": "application/json", "User-Agent": USER_AGENT}
         if self.insttoken:
             headers["X-ELS-Insttoken"] = self.insttoken

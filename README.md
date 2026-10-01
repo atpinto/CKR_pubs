@@ -83,7 +83,7 @@ If the workflow cannot commit the CSV, open **Settings → Actions → General �
 
 Each publication can show a **Cited by** count from Scopus. Google Scholar counts were tried and removed: Scholar has no official API and blocks automated requests.
 
-Counts are shown as "Cited by N in Scopus", linking to Scopus. They come from Elsevier's official Scopus Search API, so there is no CAPTCHA, and one request covers 25 records: a full pass over about 1,350 records is roughly 55 requests. Records are matched by DOI, or by PMID when the DOI is missing or contains parentheses; a count is saved only when the returned record has exactly that DOI or PMID.
+Counts are shown as "Cited by N in Scopus", linking to Scopus. They come from Elsevier's official Scopus Search API, so there is no CAPTCHA, and one request covers 12 records: a full pass over about 1,350 records is roughly 115 requests. Records are matched by DOI, or by PMID when the DOI is missing or contains parentheses; a count is saved only when the returned record has exactly that DOI or PMID.
 
 **Set up.**
 

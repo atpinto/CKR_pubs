@@ -106,6 +106,7 @@ class ClientTests(unittest.TestCase):
         self.assertIsNone(request.get_header("X-els-insttoken"))
         self.assertIn("DOI%2810.1%2Fa%29", request.full_url)
         self.assertIn("PMID%2822%29", request.full_url)
+        self.assertIn("count=25", request.full_url)  # larger counts are refused without institutional access
 
     def test_insttoken_header(self) -> None:
         _, request = self.lookup(response(), insttoken="T")
