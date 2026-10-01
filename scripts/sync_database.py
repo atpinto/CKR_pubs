@@ -17,6 +17,7 @@ from citations_common import number_setting
 from scopus_citations import (
     DEFAULT_MAX_LOOKUPS as SCOPUS_DEFAULT_MAX_LOOKUPS,
     DEFAULT_TIME_LIMIT_MINUTES as SCOPUS_DEFAULT_TIME_LIMIT_MINUTES,
+    BATCH_SIZE as SCOPUS_BATCH_SIZE,
     SCOPUS_COLUMNS,
     make_client as make_scopus_client,
     query_term,
@@ -304,7 +305,7 @@ def run_scopus_only(client: SupabaseClient, args: argparse.Namespace) -> int:
             print(f"  [{saved}] {shown}: {row['title'][:70]}", flush=True)
 
     eligible = sum(1 for row in rows if query_term(row))
-    print(f"Looking up citations in Scopus: up to {max_lookups} of {eligible} records, in batches of 25.")
+    print(f"Looking up citations in Scopus: up to {max_lookups} of {eligible} records, in batches of {SCOPUS_BATCH_SIZE}.")
     stats = refresh_scopus(rows, scopus, max_lookups=max_lookups, time_limit_seconds=time_limit * 60, apply=store)
     checked = sum(1 for row in rows if row["scopus_citations_checked_at"] and query_term(row)) + int(stats["looked_up"])
     print(
