@@ -11,6 +11,16 @@ on:
         required: false
         type: boolean
         default: false
+      skip_citations:
+        description: "Skip the Google Scholar citation refresh for this run"
+        required: false
+        type: boolean
+        default: false
+      citation_max_lookups:
+        description: "Google Scholar lookups for this run (blank = CITATION_MAX_LOOKUPS variable, else 100)"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -22,6 +32,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
 
     steps:
       - name: Check out repository
@@ -38,9 +49,14 @@ jobs:
           NCBI_EMAIL: ${{ vars.NCBI_EMAIL }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+          CITATION_MAX_LOOKUPS: ${{ inputs.citation_max_lookups || vars.CITATION_MAX_LOOKUPS }}
+          CITATION_TIME_LIMIT_MINUTES: ${{ vars.CITATION_TIME_LIMIT_MINUTES }}
         run: |
           if [ "${{ inputs.seed_database }}" = "true" ]; then
             python scripts/sync_database.py --csv publications.csv --seed
+          elif [ "${{ inputs.skip_citations }}" = "true" ]; then
+            python scripts/sync_database.py --csv publications.csv --no-citations
           else
             python scripts/sync_database.py --csv publications.csv
           fi

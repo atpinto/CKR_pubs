@@ -7,7 +7,9 @@ repository root/
 ├── .github/workflows/update-publications.yml
 ├── scripts/
 │   ├── update_publications.py
-│   └── sync_database.py
+│   ├── sync_database.py
+│   ├── scholar_citations.py
+│   └── test_scholar_citations.py
 ├── supabase/schema.sql
 ├── config.js
 ├── getsitelogo.jpeg
@@ -67,13 +69,41 @@ In **GitHub → CKR_pubs → Settings → Secrets and variables → Actions**, a
 - `SUPABASE_URL` as a repository secret;
 - `SUPABASE_SECRET_KEY` as a repository secret;
 - `NCBI_API_KEY` as an optional repository secret;
-- `NCBI_EMAIL` as an optional repository variable.
+- `NCBI_EMAIL` as an optional repository variable;
+- `SERPAPI_API_KEY` as an optional repository secret (see section 5);
+- `CITATION_MAX_LOOKUPS` and `CITATION_TIME_LIMIT_MINUTES` as optional repository variables (see section 5).
 
 For the first run, select **Import publications.csv without querying PubMed**. On later manual runs, leave it unselected so PubMed is refreshed normally.
 
-The workflow runs every Monday at 7:00 am in the `Australia/Sydney` timezone. It downloads the live database first, refreshes PubMed fields, preserves associations marked as manual, writes the result back to Supabase, and commits `publications.csv` as a backup.
+The workflow runs every Monday at 7:00 am in the `Australia/Sydney` timezone. It downloads the live database first, refreshes PubMed fields, preserves associations marked as manual, writes the result back to Supabase, and then refreshes Google Scholar citation counts (section 5). It commits `publications.csv` as a backup.
 
 If the workflow cannot commit the CSV, open **Settings → Actions → General → Workflow permissions** and allow workflows to write repository contents.
+
+## 5. Citation counts (Google Scholar)
+
+Each publication shows a **Cited by** count from Google Scholar. The weekly workflow looks the counts up in the same run that refreshes PubMed, after the PubMed update has been saved. Citation lookups are best effort: if they fail, the PubMed update, the database and the CSV backup are unaffected, and existing counts are kept.
+
+**One-time database change.** An existing database needs two new columns. In **SQL Editor**, run `supabase/schema.sql` again (it is safe to re-run), or run only this:
+
+```sql
+alter table public.publications
+  add column if not exists citations integer
+    constraint publications_citations_nonnegative check (citations is null or citations >= 0),
+  add column if not exists citations_checked_at timestamptz;
+```
+
+Until this is run, the website and the weekly update work exactly as before, and the workflow log shows a warning that citation counts were skipped.
+
+**Google Scholar has no official API,** so there are two ways to read it:
+
+- **Direct (default, free).** The script searches scholar.google.com by title. Google restricts automated access and often blocks cloud servers such as GitHub Actions. When Google asks for a CAPTCHA, the script stops for that run and keeps the existing counts.
+- **SerpApi (more reliable, paid).** Add a `SERPAPI_API_KEY` repository secret and the script uses [SerpApi](https://serpapi.com/google-scholar-api) instead. Each lookup uses one SerpApi search, so check their current plans and set `CITATION_MAX_LOOKUPS` to fit.
+
+**How many records per run.** A run looks up at most 100 records (`CITATION_MAX_LOOKUPS`) and stops after 60 minutes (`CITATION_TIME_LIMIT_MINUTES`). Records that have never been checked go first, newest first, then the records with the oldest check, so the whole collection is covered over several weeks. At 100 per run, a first pass over about 1,350 records takes roughly 14 weekly runs. For a faster first pass, run the workflow manually with a larger **Google Scholar lookups** value; this is only realistic with SerpApi.
+
+**Trying it.** Select **Actions → Update publications from PubMed → Run workflow**, set **Google Scholar lookups** to `10`, and read the `Citation counts (…)` line in the log. If the log warns that Google Scholar asked for a CAPTCHA, direct mode will not work from GitHub Actions; use SerpApi. Tick **Skip the Google Scholar citation refresh** to run the PubMed update alone.
+
+**Matching.** A count is saved only when one of the top Google Scholar results has the same title as the record (ignoring case, punctuation and accents). If none match, the record is marked as checked without a count and tried again in a later cycle. Counts can differ from other databases, and an edited title may need a later refresh.
 
 ## Editing publications
 
@@ -90,3 +120,5 @@ For a new PubMed publication, enter its PMID and select **Populate from PubMed**
 ## Local testing
 
 Until `config.js` contains working Supabase values, the page automatically falls back to the committed CSV in read-only mode. Serve the repository with a local web server rather than opening `index.html` using a `file:` URL.
+
+Run the citation tests with `python -m unittest discover -s scripts`. They use saved sample responses and make no network requests.
