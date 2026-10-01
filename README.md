@@ -135,6 +135,28 @@ The values last only for that terminal window. Each lookup prints a line as it i
 
 **Matching.** A count is saved only when one of the top Google Scholar results has the same title as the record (ignoring case, punctuation and accents). If none match, the record is marked as checked without a count and tried again in a later cycle. Counts can differ from other databases, and an edited title may need a later refresh.
 
+### Scopus citation counts
+
+Scopus counts are shown next to the Google Scholar counts as "Cited by N in Scopus", linking to Scopus. They come from Elsevier's official Scopus Search API, so there is no CAPTCHA, and one request covers 25 records: a full pass over about 1,350 records is roughly 55 requests. Records are matched by DOI, or by PMID when the DOI is missing or contains parentheses; a count is saved only when the returned record has exactly that DOI or PMID.
+
+**Set up.**
+
+1. In Supabase, run the updated `supabase/schema.sql` again. It is safe to re-run and adds the `scopus_citations`, `scopus_citations_checked_at` and `scopus_url` columns. Until you do, the website and scripts keep working without Scopus.
+2. Create an API key at [dev.elsevier.com](https://dev.elsevier.com) (My API Key). Scopus data depends on your institution's subscription: the key usually works only from the institution's network or VPN, unless Elsevier also issues you an institutional token (your library can request one).
+3. Try it on your own computer, on campus or VPN:
+
+```bash
+export SUPABASE_URL='https://PROJECT.supabase.co'
+export SUPABASE_SECRET_KEY='SECRET_KEY'
+export SCOPUS_API_KEY='ELSEVIER_KEY'
+# export SCOPUS_INSTTOKEN='TOKEN'   # only if Elsevier gave you one
+python3 scripts/sync_database.py --scopus-only --scopus-max-lookups 25
+```
+
+4. For the weekly run, add repository secrets `SCOPUS_API_KEY` (and `SCOPUS_INSTTOKEN` if you have one). Without `SCOPUS_API_KEY` the weekly run skips Scopus. GitHub's servers are outside your institution's network, so a key without an institutional token may be refused there (HTTP 401/403); the log then says so and the rest of the update is unaffected.
+
+`SCOPUS_MAX_LOOKUPS` (repository variable, default 2000) limits records per run; the API quota is 20,000 requests a week. Scopus and Google Scholar counts normally differ because they index different sources. Citation counts are never overwritten by a failed lookup, and `--no-citations` skips both Scholar and Scopus.
+
 ## Editing publications
 
 Visitors have read-only access. An approved editor selects **Editor sign in**, enters their email and password, and then uses **Add publication** or **Edit record & associations**. Clicking **Save record** writes the record directly to Supabase; no CSV download or GitHub commit is required.

@@ -50,6 +50,14 @@ alter table public.publications
     constraint publications_citations_nonnegative check (citations is null or citations >= 0),
   add column if not exists citations_checked_at timestamptz;
 
+-- Scopus citation counts (Elsevier API). scopus_url is Scopus's own "cited by" link, which
+-- Elsevier's terms require next to a displayed count. All three are null until checked.
+alter table public.publications
+  add column if not exists scopus_citations integer
+    constraint publications_scopus_citations_nonnegative check (scopus_citations is null or scopus_citations >= 0),
+  add column if not exists scopus_citations_checked_at timestamptz,
+  add column if not exists scopus_url text;
+
 create unique index if not exists publications_pmid_unique
   on public.publications (pmid) where pmid is not null and pmid <> '';
 create index if not exists publications_year_idx on public.publications (year desc);
