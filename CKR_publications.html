@@ -4,40 +4,218 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Publications | Centre for Kidney Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:light;--ink:#173638;--muted:#536968;--teal:#126c68;--paper:#f5f7f4;--line:#d9e3de;--white:#fff}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}a{color:var(--teal);text-underline-offset:3px}button,input,select{font:inherit}button,select{cursor:pointer}button{border:1px solid #b4c9bf;background:#fff;color:var(--ink);padding:10px 17px;border-radius:7px;font-weight:600}button:hover{background:#edf4ef}button:disabled{opacity:.45;cursor:default}button.primary{background:var(--teal);border-color:var(--teal);color:white}button.primary:hover{background:#0c5552}:focus-visible{outline:3px solid #ba7435;outline-offset:3px}.wrap{max-width:1216px;margin:auto;padding:0 32px}
-header{background:#163e3d;color:#fff;padding:25px 0}.brand{display:flex;align-items:center;gap:17px}.monogram{font-size:20px;font-weight:750;letter-spacing:1px;padding:9px 12px;border:1px solid #6b9290;border-radius:4px}.brand strong{font-size:18px;font-weight:600;display:block}.brand small{display:block;color:#c0d4cd;font-size:13px;margin-top:2px}.hero{padding:43px 0 30px}.eyebrow{text-transform:uppercase;letter-spacing:.15em;color:var(--teal);font-size:12px;font-weight:750}.hero h1{font-size:clamp(34px,5vw,49px);line-height:1.15;letter-spacing:-.035em;margin:9px 0 14px;font-weight:650}.hero p{max-width:740px;margin:0;color:var(--muted)}.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:24px}.stamp{font-size:13px;text-align:right;color:var(--muted);white-space:nowrap}.stats{display:flex;gap:48px;border-bottom:1px solid var(--line);padding:26px 0 25px;margin-bottom:25px}.stat strong{font-size:27px;line-height:1.25;display:block;font-weight:650;letter-spacing:-.03em}.stat span{font-size:13px;color:var(--muted)}
-.filters{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:21px;display:grid;grid-template-columns:2.3fr 1fr 1.4fr 1.4fr;gap:15px}.filters label{font-size:12px;font-weight:650;display:block;color:var(--muted)}input,select{display:block;width:100%;min-width:0;padding:11px 10px;border:1px solid #b8c9c0;border-radius:6px;color:var(--ink);background:#fff;margin-top:6px;font-size:15px}input::placeholder{color:#71837c}.filter-bottom{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-top:14px}.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.check input{width:17px;height:17px;margin:0;accent-color:var(--teal)}.text-button{background:transparent;border:0;padding:6px 0;color:var(--teal);font-size:13px;text-decoration:underline;font-weight:500}.notice{font-size:13px;color:var(--muted);margin:17px 0 20px}.notice b{color:#8b5720;font-weight:600}.results-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 0;border-top:1px solid var(--line)}.results-count{font-size:14px}.actions{display:flex;gap:8px;align-items:center}.actions select{width:auto;margin:0;font-size:13px;padding:10px}.actions button{font-size:13px}.publication{display:grid;grid-template-columns:66px 1fr;gap:19px;border-top:1px solid var(--line);padding:25px 0 24px;break-inside:avoid}.year{font-size:17px;color:var(--teal);font-weight:600;padding-top:2px}.publication h2{font-size:19px;line-height:1.45;letter-spacing:-.012em;font-weight:600;margin:0 0 7px;max-width:970px}.publication h2 a{color:var(--ink);text-decoration:none}.publication h2 a:hover{text-decoration:underline}.authors{font-size:13px;color:var(--muted);margin:0 0 5px}.citation{font-size:14px;margin:0}.citation em{font-style:italic}.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}.badge{display:inline-block;padding:3px 8px;background:#e7f0e9;color:#235a48;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.015em}.badge.programme{background:#eaf0f5;color:#3f5c74}.badge.alert{background:#f8e9d8;color:#805021}.record-bottom{display:flex;gap:18px;align-items:baseline;flex-wrap:wrap;margin-top:12px;font-size:12px}.record-bottom a{font-weight:600}.details{margin-top:12px;font-size:13px;color:var(--muted)}.details summary{cursor:pointer;color:var(--teal);width:fit-content}.details p{margin:9px 0;overflow-wrap:anywhere}.details ul{padding-left:20px;margin:7px 0}.empty{padding:60px 20px;text-align:center;border-top:1px solid var(--line);color:var(--muted)}.empty strong{display:block;font-size:21px;color:var(--ink);margin-bottom:7px}.pagination{display:flex;justify-content:space-between;align-items:center;gap:15px;border-top:1px solid var(--line);padding:23px 0;font-size:13px;color:var(--muted)}.pagination div{display:flex;gap:9px}.method{border-top:1px solid var(--line);margin-top:13px;padding:24px 0 35px;color:var(--muted);font-size:13px}.method summary{cursor:pointer;color:var(--ink);font-size:15px;font-weight:600}.method-body{max-width:870px}.method-body p{margin:14px 0}.method code{font-size:12px;overflow-wrap:anywhere}.foot{border-top:1px solid var(--line);padding:20px 0 32px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:15px}.skip{position:absolute;left:-9999px}.skip:focus{position:fixed;left:15px;top:10px;background:white;padding:10px;z-index:10}.print-label{display:none}
-@media(max-width:800px){.wrap{padding:0 22px}.filters{grid-template-columns:1fr 1fr}.hero-top{align-items:flex-start;flex-direction:column;gap:12px}.stamp{text-align:left}.stats{gap:30px}.results-bar{flex-wrap:wrap}.actions{flex-wrap:wrap}.hero{padding-top:29px}.publication{grid-template-columns:48px 1fr;gap:12px}}
-@media(max-width:480px){.wrap{padding:0 16px}.brand strong{font-size:15px}.brand small{font-size:12px}.monogram{font-size:16px;padding:9px}.filters{grid-template-columns:1fr;padding:16px}.stats{gap:22px}.stat strong{font-size:23px}.stat span{font-size:11px}.publication{display:block}.year{font-size:13px;margin-bottom:7px}.publication h2{font-size:17px}.filter-bottom,.pagination{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button{padding:9px 11px}.foot{flex-direction:column}.check{align-items:flex-start}}
-@media print{body{background:white;font-size:11px}.wrap{max-width:none;padding:0}header{background:white;color:#173638;padding:0 0 18px}.brand small{color:#536968}.monogram{border-color:#536968}.hero{padding:14px 0}.hero h1{font-size:30px}.hero p,.stamp,.stats,.filters,.filter-bottom,.notice,.actions,.pagination,.method,.foot,.skip,.details{display:none!important}.results-bar{border:0}.publication{padding:12px 0;grid-template-columns:44px 1fr;gap:12px}.publication h2{font-size:14px}.authors,.citation{font-size:11px}.year{font-size:12px}.record-bottom{font-size:10px}.print-label{display:block;font-size:11px}.badges{margin-top:5px}.badge{font-size:9px}.results-count{font-size:11px}}
-.update-panel{padding:18px 20px;background:#e9f1ed;border:1px solid #cfdfd6;border-radius:9px;margin:22px 0 0}.update-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.update-panel p{font-size:13px;margin:10px 0 0;max-width:none}.update-panel .error{color:#944527}progress{display:block;width:100%;height:9px;margin:15px 0 0;accent-color:var(--teal)}[hidden]{display:none!important}.update-help{color:var(--muted)}@media print{.update-panel{display:none!important}}
+/* Tokens: one accent (CKR teal), cool neutrals, one radius scale (8px surfaces/controls, pill badges). */
+:root{color-scheme:light;--bg:#f3f6f5;--surface:#fbfdfc;--ink:#132e2d;--muted:#4c6261;--faint:#6a7f7c;--line:#dbe5e1;--line-strong:#b5c8c0;--accent:#0f6b66;--accent-hover:#0b5652;--accent-ink:#fff;--accent-soft:#e2efeb;--header:#123a39;--header-ink:#f2f7f5;--header-muted:#b9cfc8;--warn-bg:#f6e9d9;--warn:#774717;--prog-bg:#e7eef4;--prog:#38556d;--error:#9a3f22;--shadow:0 1px 2px #0f3b3814,0 8px 24px -12px #0f3b3826;--radius:8px;--sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0d1716;--surface:#132120;--ink:#e2ebe8;--muted:#a1b5b1;--faint:#7f9692;--line:#223533;--line-strong:#35504c;--accent:#5ec3b9;--accent-hover:#7fd3ca;--accent-ink:#06211f;--accent-soft:#173430;--header:#0a1413;--header-ink:#e2ebe8;--header-muted:#97aea9;--warn-bg:#3a2a17;--warn:#f0c48f;--prog-bg:#1b2a36;--prog:#a9c4dc;--error:#f19a7c;--shadow:0 1px 2px #0006,0 8px 24px -12px #0008}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1716;--surface:#132120;--ink:#e2ebe8;--muted:#a1b5b1;--faint:#7f9692;--line:#223533;--line-strong:#35504c;--accent:#5ec3b9;--accent-hover:#7fd3ca;--accent-ink:#06211f;--accent-soft:#173430;--header:#0a1413;--header-ink:#e2ebe8;--header-muted:#97aea9;--warn-bg:#3a2a17;--warn:#f0c48f;--prog-bg:#1b2a36;--prog:#a9c4dc;--error:#f19a7c;--shadow:0 1px 2px #0006,0 8px 24px -12px #0008}
 
-.brand-logo{display:block;width:auto;height:76px;background:#fff;border-radius:5px}
-.auth-state{display:inline-flex;align-items:center;min-height:38px;color:var(--muted);font-size:12px}.login-error{min-height:22px;color:#944527;font-size:13px;margin:8px 0 0}.password-note{font-size:12px;color:var(--muted);margin-top:12px}
-.inline-edit{border:0;background:transparent;padding:0;color:var(--teal);font-size:12px;text-decoration:underline;font-weight:600}.inline-edit:hover{background:transparent}.data-note{font-weight:600;color:var(--ink)}
-dialog{width:min(760px,calc(100% - 32px));max-height:calc(100vh - 32px);padding:0;border:0;border-radius:12px;box-shadow:0 18px 70px #092b2a55;color:var(--ink)}dialog::backdrop{background:#0d2929aa}.dialog-head{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 24px;background:#fff;border-bottom:1px solid var(--line)}.dialog-head h2{margin:0;font-size:23px}.icon-button{border:0;padding:4px 8px;font-size:24px;line-height:1;background:transparent}.editor-body{padding:22px 24px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid .wide{grid-column:1/-1}.form-grid label{display:block;font-size:12px;font-weight:650;color:var(--muted)}.form-grid textarea{display:block;width:100%;min-height:82px;resize:vertical;margin-top:6px;padding:10px;border:1px solid #b8c9c0;border-radius:6px;color:var(--ink);font:15px/1.4 inherit}.pmid-row{display:grid;grid-template-columns:1fr auto;align-items:end;gap:9px}.pmid-row button{margin-bottom:0}.form-help{font-size:12px;color:var(--muted);margin:5px 0 0}.fetch-status{min-height:20px;font-size:13px;color:var(--teal);margin:8px 0 0}.dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;background:#fff;border-top:1px solid var(--line)}
-@media(max-width:600px){.brand-logo{height:62px}.form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.dialog-head,.editor-body,.dialog-actions{padding-left:17px;padding-right:17px}.pmid-row{grid-template-columns:1fr}}
-@media print{dialog,.inline-edit{display:none!important}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased;font-feature-settings:"ss01"}
+a{color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1px}
+button,input,select,textarea{font:inherit}button,select{cursor:pointer}
+button{border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);padding:9px 15px;border-radius:var(--radius);font-weight:550;font-size:14px;line-height:1.3;white-space:nowrap;transition:background-color .15s,border-color .15s,transform .1s}
+button:hover{background:var(--accent-soft);border-color:var(--accent)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1280px;margin:auto;padding:0 32px}
+.skip{position:absolute;left:-9999px}.skip:focus{position:fixed;left:16px;top:12px;background:var(--surface);color:var(--ink);padding:10px 14px;border-radius:var(--radius);z-index:10}
+[hidden]{display:none!important}
+
+/* Header */
+header{background:var(--header);color:var(--header-ink)}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:84px;padding-top:12px;padding-bottom:12px}
+.brand{display:flex;align-items:center;gap:16px;min-width:0}
+.brand-logo{display:block;width:auto;height:56px;background:#fff;border-radius:6px;padding:3px}
+.brand strong{font-size:17px;font-weight:600;display:block;letter-spacing:-.01em}
+.brand small{display:block;color:var(--header-muted);font-size:13px;margin-top:1px}
+.account{display:flex;align-items:center;gap:12px}
+.account .auth-state{color:var(--header-muted);font-size:13px}
+.account button{background:transparent;color:var(--header-ink);border-color:#ffffff40}
+.account button:hover{background:#ffffff14;border-color:#ffffff80}
+
+/* Intro */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:48px;align-items:end;padding:48px 0 36px}
+.hero h1{font-size:clamp(36px,4.6vw,52px);line-height:1.05;letter-spacing:-.035em;margin:0 0 12px;font-weight:650}
+.hero p{max-width:56ch;margin:0;color:var(--muted);font-size:17px}
+.stats{display:grid;grid-template-columns:repeat(3,auto);gap:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+.stat{padding:14px 22px}.stat+.stat{border-left:1px solid var(--line)}
+.stat strong{font:600 24px/1.2 var(--mono);display:block;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.hero-meta{display:grid;gap:8px;justify-items:end}.stamp{font-size:13px;color:var(--faint);margin:0}
+.stamp strong{color:var(--muted);font-weight:550}
+
+/* Two-column register */
+.register{display:grid;grid-template-columns:280px minmax(0,1fr);gap:48px;align-items:start;border-top:1px solid var(--line);padding-top:28px}
+.sidebar{position:sticky;top:20px;max-height:calc(100dvh - 40px);overflow:auto;padding:2px 4px 8px 2px}
+.filters{display:grid;gap:16px}
+.filters label,.form-grid label{font-size:13px;font-weight:550;display:block;color:var(--ink)}
+input,select{display:block;width:100%;min-width:0;padding:10px 11px;border:1px solid var(--line-strong);border-radius:var(--radius);color:var(--ink);background:var(--surface);margin-top:6px;font-size:15px;transition:border-color .15s}
+input:hover,select:hover{border-color:var(--faint)}
+input::placeholder,textarea::placeholder{color:var(--faint)}
+.search-field input{padding-left:36px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236a7f7c' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 3.5 3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.filter-bottom{display:grid;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.check{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--ink);line-height:1.4}
+.check input{width:17px;height:17px;margin:1px 0 0;flex:none;accent-color:var(--accent)}
+.text-button{background:transparent;border:0;padding:4px 0;color:var(--accent);font-size:14px;text-decoration:underline;text-underline-offset:3px;font-weight:500;justify-self:start}
+.text-button:hover{background:transparent;color:var(--accent-hover)}
+.notice{font-size:13px;color:var(--muted);margin:22px 0 0;padding:14px 16px;background:var(--warn-bg);border-radius:var(--radius);line-height:1.5}
+.notice b{display:block;color:var(--warn);font-weight:600;margin-bottom:3px}
+
+/* Data tools strip */
+.update-panel{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding:10px 12px 10px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px}
+.update-panel p{font-size:13px;margin:0;color:var(--muted)}
+.update-panel .error{color:var(--error)}
+.update-actions{display:flex;flex-wrap:wrap;gap:6px}
+.update-actions button{font-size:13px;padding:7px 12px}
+progress{display:block;width:100%;height:8px;margin:12px 0 0;accent-color:var(--accent)}
+
+/* Results */
+.results-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line)}
+.results-count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.actions{display:flex;gap:8px;align-items:center}
+.actions select{width:auto;margin:0;font-size:14px;padding:8px 10px}
+.publication{display:grid;grid-template-columns:52px minmax(0,1fr) 116px;gap:20px;padding:24px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.year{font:500 14px/1.9 var(--mono);color:var(--faint);font-variant-numeric:tabular-nums}
+.publication h2{font-size:18px;line-height:1.4;letter-spacing:-.012em;font-weight:600;margin:0 0 6px;max-width:72ch;text-wrap:pretty}
+.publication h2 a{color:var(--ink);text-decoration:none}
+.publication h2 a:hover{color:var(--accent);text-decoration:underline}
+.authors{font-size:14px;color:var(--muted);margin:0 0 3px}
+.citation{font-size:14px;margin:0;color:var(--muted)}
+.citation em{font-style:italic;color:var(--ink)}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.badge{display:inline-block;padding:3px 10px;background:var(--accent-soft);color:var(--accent);border-radius:999px;font-size:12px;font-weight:550}
+.badge.programme{background:var(--prog-bg);color:var(--prog)}
+.badge.alert{background:var(--warn-bg);color:var(--warn)}
+.record-bottom{display:flex;gap:6px 16px;align-items:baseline;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--faint)}
+.record-bottom a{font-weight:550;text-decoration:none}
+.record-bottom a:hover{text-decoration:underline}
+.record-bottom .pmid{font-family:var(--mono);font-size:12px}
+.cites{text-align:right;padding-top:2px}
+.cites a{display:inline-flex;flex-direction:column;align-items:flex-end;text-decoration:none;color:var(--ink);border-radius:6px}
+.cites strong{font:600 22px/1.1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.cites span{white-space:nowrap;font-size:11px;color:var(--faint);margin-top:3px}
+.cites a:hover span{color:var(--accent);text-decoration:underline}
+.details{margin-top:10px;font-size:13px;color:var(--muted)}
+.details summary{cursor:pointer;color:var(--accent);width:fit-content}
+.details p{margin:9px 0;overflow-wrap:anywhere;max-width:80ch}
+.details ul{padding-left:20px;margin:7px 0}
+.inline-edit{border:0;background:transparent;padding:0;color:var(--accent);font-size:13px;text-decoration:underline;font-weight:550}
+.inline-edit:hover{background:transparent}
+.empty{padding:72px 20px;text-align:center;color:var(--muted)}
+.empty strong{display:block;font-size:20px;color:var(--ink);margin-bottom:6px;font-weight:600}
+.pagination{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 0;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pagination div{display:flex;gap:8px}
+.print-label{display:none}
+
+/* Loading skeleton (replaced on first render) */
+.skeleton{padding:24px 0 24px 72px;border-bottom:1px solid var(--line)}
+.skeleton span{display:block;height:12px;border-radius:999px;background:var(--line);margin:0 0 10px}
+.skeleton span:nth-child(1){height:16px;width:78%}.skeleton span:nth-child(2){width:52%}.skeleton span:nth-child(3){width:34%;margin:0}
+
+/* About + footer */
+.method{border-top:1px solid var(--line);margin-top:48px;padding:24px 0 32px;color:var(--muted);font-size:14px}
+.method summary{cursor:pointer;color:var(--ink);font-size:16px;font-weight:600}
+.method-body{max-width:72ch;columns:2 320px;column-gap:48px;margin-top:8px}
+.method-body p{margin:0 0 14px;break-inside:avoid}
+.method-body strong{color:var(--ink);font-weight:600}
+.method code{font:12px var(--mono);overflow-wrap:anywhere}
+.foot{border-top:1px solid var(--line);padding:20px 0 36px;font-size:13px;color:var(--faint);display:flex;justify-content:space-between;gap:16px}
+noscript p{padding:24px 0;color:var(--muted)}
+
+/* Dialogs */
+dialog{width:min(760px,calc(100% - 32px));max-height:calc(100dvh - 32px);padding:0;border:1px solid var(--line);border-radius:12px;box-shadow:0 24px 80px #06201f59;color:var(--ink);background:var(--surface)}
+dialog::backdrop{background:#0b2221b3}
+.dialog-head{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+.dialog-head h2{margin:0;font-size:21px;font-weight:600;letter-spacing:-.015em}
+.icon-button{border:0;padding:4px 8px;font-size:24px;line-height:1;background:transparent}
+.editor-body{padding:22px 24px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.form-grid .wide{grid-column:1/-1}
+.form-grid textarea{display:block;width:100%;min-height:82px;resize:vertical;margin-top:6px;padding:10px 11px;border:1px solid var(--line-strong);border-radius:var(--radius);color:var(--ink);background:var(--surface);font-size:15px;line-height:1.4}
+.pmid-row{display:grid;grid-template-columns:1fr auto;align-items:end;gap:9px}
+.form-help{display:block;font-size:12px;font-weight:400;color:var(--muted);margin:5px 0 0}
+.fetch-status{min-height:20px;font-size:13px;color:var(--accent);margin:8px 0 0}
+.login-error{min-height:22px;color:var(--error);font-size:13px;margin:8px 0 0}
+.password-note{font-size:13px;color:var(--muted);margin-top:12px}
+.dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;background:var(--surface);border-top:1px solid var(--line)}
+
+/* Motion: rows settle in after a filter or page change. Off for reduced motion. */
+@media (prefers-reduced-motion:no-preference){
+  .publication{animation:settle .32s cubic-bezier(.16,1,.3,1) both;animation-delay:calc(min(var(--i,0),12) * 18ms)}
+  .skeleton span{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes settle{from{opacity:0;transform:translateY(6px)}}
+  @keyframes pulse{50%{opacity:.45}}
+}
+
+/* Responsive */
+@media(max-width:1020px){
+  .register{grid-template-columns:1fr;gap:20px}
+  .sidebar{position:static;max-height:none;overflow:visible;padding:0}
+  .filters{grid-template-columns:1fr 1fr}.filters .search-field{grid-column:1/-1}
+  .filter-bottom{grid-template-columns:1fr auto;align-items:center}
+  .hero{grid-template-columns:1fr;gap:24px;align-items:start}.hero-meta{justify-items:start}
+}
+@media(max-width:720px){
+  .wrap{padding:0 16px}
+  .masthead{flex-wrap:wrap;gap:12px}
+  .brand-logo{height:44px}.brand strong{font-size:15px}.brand small{font-size:12px}
+  .hero{padding:32px 0 24px}
+  .stats{grid-template-columns:repeat(3,1fr)}.stat{padding:12px 14px}.stat strong{font-size:19px}.stat span{font-size:11px}
+  .filters{grid-template-columns:1fr}
+  .update-panel{padding:12px}
+  .results-bar{position:static;flex-direction:column;align-items:stretch}
+  .actions{flex-wrap:wrap}.actions select{flex:1 1 100%}.actions button{flex:1}
+  .publication{grid-template-columns:1fr;gap:6px}
+  .year{line-height:1.4}
+  .cites{text-align:left;order:3}.cites a{flex-direction:row;align-items:baseline;gap:6px}.cites strong{font-size:16px}
+  .skeleton{padding-left:0}
+  .pagination,.foot{flex-direction:column;align-items:flex-start}
+  .form-grid{grid-template-columns:1fr}.form-grid .wide{grid-column:auto}.pmid-row{grid-template-columns:1fr}
+  .dialog-head,.editor-body,.dialog-actions{padding-left:16px;padding-right:16px}
+}
+
+/* Print */
+@media print{
+  :root{--bg:#fff;--surface:#fff;--ink:#132e2d;--muted:#4c6261;--faint:#4c6261;--line:#ccd8d3;--accent:#0f6b66}
+  body{background:#fff;font-size:11px}.wrap{max-width:none;padding:0}
+  header{background:#fff;color:var(--ink)}.brand small{color:var(--muted)}
+  .account,.stats,.stamp,.hero p,.sidebar,.update-panel,.actions,.pagination,.method,.foot,.skip,.details,dialog,.inline-edit{display:none!important}
+  .hero{padding:12px 0;display:block}.hero h1{font-size:28px}
+  .register{display:block;border:0;padding:0}
+  .results-bar{position:static;border:0;padding:4px 0}
+  .publication{padding:10px 0;grid-template-columns:40px 1fr 60px;gap:10px;animation:none}
+  .publication h2{font-size:13px}.authors,.citation{font-size:11px}.year{font-size:11px}.record-bottom{font-size:10px}
+  .cites strong{font-size:13px}
+  .print-label{display:block;font-size:11px}
+  .badges{margin-top:5px}.badge{font-size:9px}
+}
 </style>
 </head>
 <body>
 <a class="skip" href="#results">Skip to publications</a>
-<header><div class="wrap brand"><img class="brand-logo" src="getsitelogo.jpeg" alt="" aria-hidden="true"><div><strong>Centre for Kidney Research</strong><small>Sydney · The Children’s Hospital at Westmead</small></div></div></header>
+<header><div class="wrap masthead"><div class="brand"><img class="brand-logo" src="getsitelogo.jpeg" alt="" aria-hidden="true"><div><strong>Centre for Kidney Research</strong><small>Sydney · The Children’s Hospital at Westmead</small></div></div><div class="account"><span id="auth-state" class="auth-state">Public read-only access</span><button id="sign-in" type="button">Editor sign in</button><button id="sign-out" type="button" hidden>Sign out</button></div></div></header>
 <main class="wrap">
-<section class="hero"><div class="hero-top"><div><div class="eyebrow">Research collection</div><h1>Publications</h1><p>Explore the Centre’s publications by author, year, project or programme.</p></div><div class="stamp">Last checked<br><strong id="last-updated">14 September 2026</strong></div></div>
-<div class="update-panel"><div class="update-actions"><button id="reload-data" type="button" class="primary">Reload database</button><button id="sign-in" type="button">Editor sign in</button><button id="sign-out" type="button" hidden>Sign out</button><span id="auth-state" class="auth-state">Public read-only access</span><button id="save-csv" type="button">Download CSV backup</button><button id="add-publication" type="button" disabled>Add publication</button></div><p id="update-status" role="status" aria-live="polite">Connecting to the publication database…</p><p class="update-help"><span class="data-note">Live database:</span> approved editors can sign in and save changes immediately. GitHub Actions refreshes PubMed fields and citation counts every Monday while preserving manually curated associations.</p></div>
-<div class="stats"><div class="stat"><strong id="total-stat">0</strong><span>publication records</span></div><div class="stat"><strong id="year-range">—</strong><span>publication years</span></div><div class="stat"><strong id="matched-stat">0</strong><span>with project/programme associations</span></div></div>
-<div class="filters" role="search" aria-label="Filter publications"><label for="search">Search the collection<input id="search" type="search" placeholder="Title, author, journal or DOI…" autocomplete="off"></label><label for="year">Publication year<select id="year"><option value="">All years</option></select></label><label for="project">Project<select id="project"><option value="">All projects</option></select></label><label for="programme">Programme<select id="programme"><option value="">All programmes</option></select></label></div>
+<section class="hero"><div><h1>Publications</h1><p>Explore the Centre’s publications by author, year, project or programme.</p></div><div class="hero-meta"><div class="stats"><div class="stat"><strong id="total-stat">0</strong><span>publication records</span></div><div class="stat"><strong id="year-range">-</strong><span>publication years</span></div><div class="stat"><strong id="matched-stat">0</strong><span>with associations</span></div></div><p class="stamp">Last checked <strong id="last-updated">14 September 2026</strong></p></div></section>
+<div class="register">
+<aside class="sidebar" aria-label="Filters">
+<div class="filters" role="search" aria-label="Filter publications"><label class="search-field" for="search">Search the collection<input id="search" type="search" placeholder="Title, author, journal or DOI" autocomplete="off"></label><label for="year">Publication year<select id="year"><option value="">All years</option></select></label><label for="project">Project<select id="project"><option value="">All projects</option></select></label><label for="programme">Programme<select id="programme"><option value="">All programmes</option></select></label></div>
 <div class="filter-bottom"><label class="check"><input type="checkbox" id="associated">Show only records with an association</label><button id="reset" class="text-button" type="button">Clear filters</button></div>
-<p class="notice"><b>Associations can be curated manually.</b> Automatically suggested associations remain labelled as suggestions until a record is edited. This affiliation-based collection may omit papers that do not name CKR.</p>
-</section>
-<section id="results" aria-label="Publication results"><div class="results-bar"><div id="result-count" class="results-count" role="status" aria-live="polite"></div><div class="actions"><select id="sort" aria-label="Sort publications"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="title">Title A–Z</option></select><button id="print" type="button">Print list</button><button id="export" class="primary" type="button">Export to EndNote</button></div></div><p class="print-label">CKR affiliation-based collection · <span id="print-date">14 September 2026</span>. Associations are unconfirmed suggestions.</p><div id="list"></div><div class="pagination"><span id="page-info"></span><div><button type="button" id="prev">Previous</button><button type="button" id="next">Next</button></div></div></section>
+<p class="notice"><b>About associations</b>Automatically suggested associations remain labelled as suggestions until a record is edited. This affiliation-based collection may omit papers that do not name CKR.</p>
+</aside>
+<section id="results" aria-label="Publication results">
+<div class="update-panel"><p id="update-status" role="status" aria-live="polite">Connecting to the publication database…</p><div class="update-actions"><button id="reload-data" type="button">Reload database</button><button id="save-csv" type="button">Download CSV backup</button><button id="add-publication" type="button" class="primary" disabled>Add publication</button></div></div>
+<div class="results-bar"><div id="result-count" class="results-count" role="status" aria-live="polite"></div><div class="actions"><select id="sort" aria-label="Sort publications"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="cited">Most cited (Scopus)</option><option value="title">Title A-Z</option></select><button id="print" type="button">Print list</button><button id="export" class="primary" type="button">Export to EndNote</button></div></div><p class="print-label">CKR affiliation-based collection · <span id="print-date">14 September 2026</span>. Associations are unconfirmed suggestions.</p><div id="list"><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="pagination"><span id="page-info"></span><div><button type="button" id="prev">Previous</button><button type="button" id="next">Next</button></div></div></section>
+</div>
 <details class="method"><summary>About this collection &amp; keeping it up to date</summary><div class="method-body"><p><strong>Live data.</strong> The collection contains <span id="coverage-count">0</span> records loaded from a Supabase PostgreSQL database. The committed <code>publications.csv</code> remains a portable backup.</p><p><strong>Automatic updates.</strong> The GitHub Actions workflow runs every Monday at 7:00 am in the Australia/Sydney timezone. It queries PubMed, refreshes the database and CSV backup, and preserves manually curated project/programme assignments.</p><p><strong>Citation counts.</strong> “Cited by” numbers come from Scopus (matched by DOI or PubMed ID) and link to the paper’s record on Scopus. They are looked up during the weekly run: new records first, then the records whose count is oldest, so older counts can be a little out of date; hover over a count to see when it was checked. A record shows no count until it has been checked and found in Scopus, and a count is never replaced by a failed lookup.</p><p><strong>Manual records and associations.</strong> Approved editors sign in with email and password. Use <strong>Add publication</strong> and enter a PMID to populate its citation from PubMed, or fill the fields yourself. Every record then has an <strong>Edit record &amp; associations</strong> button. Enter one project or programme per line. Clicking <strong>Save record</strong> writes the change directly to the database and records it in the audit history.</p><p><strong>CSV backup.</strong> The associations are text in the <code>projects</code> and <code>programmes</code> columns, separated by <code> | </code>. Multi-value citation fields use JSON arrays so commas and semicolons round-trip safely.</p><p><strong>Coverage.</strong> The weekly updater uses the Centre/Center for Kidney Research affiliation query and retains only matching Sydney, Westmead, New South Wales or NSW affiliations. Existing records that can no longer be verified are retained with a review label. Manually added non-PubMed records are never removed.</p><p><strong>EndNote.</strong> “Export to EndNote” downloads the currently filtered records as a RIS file. In <a href="https://my.endnote.com" target="_blank" rel="noopener noreferrer">EndNote Online</a>, import it using RefMan RIS. Project and programme assignments are included as searchable keywords.</p><p>Each PubMed record links to its source. A <a id="alert-link" target="_blank" rel="noopener noreferrer">PubMed search alert</a> is also available.</p></div></details>
 <dialog id="login-dialog" aria-labelledby="login-title"><form id="login-form"><div class="dialog-head"><h2 id="login-title">Editor sign in</h2><button id="close-login" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><label class="wide" for="login-email">Email<input id="login-email" type="email" autocomplete="username" required></label><label class="wide" for="login-password">Password<input id="login-password" type="password" autocomplete="current-password" required></label></div><p id="login-error" class="login-error" role="alert"></p><p class="password-note">Only accounts approved as publication editors can save changes.</p></div><div class="dialog-actions"><button id="cancel-login" type="button">Cancel</button><button id="submit-login" class="primary" type="submit">Sign in</button></div></form></dialog>
 <dialog id="editor" aria-labelledby="editor-title"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Add publication</h2><button id="close-editor" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><div class="wide"><div class="pmid-row"><label for="edit-pmid">PubMed ID (optional)<input id="edit-pmid" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 42715707"></label><button id="fetch-pmid" type="button">Populate from PubMed</button></div><p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p></div><label class="wide" for="edit-title">Title *<input id="edit-title" required></label><label for="edit-year">Year *<input id="edit-year" required inputmode="numeric" pattern="[0-9]{4}"></label><label for="edit-journal">Journal<input id="edit-journal"></label><label for="edit-abbreviation">Journal abbreviation<input id="edit-abbreviation"></label><label for="edit-doi">DOI<input id="edit-doi"></label><label class="wide" for="edit-authors">Authors<textarea id="edit-authors" placeholder="One author per line"></textarea></label><label for="edit-volume">Volume<input id="edit-volume"></label><label for="edit-issue">Issue<input id="edit-issue"></label><label for="edit-start-page">Start page or article number<input id="edit-start-page"></label><label for="edit-end-page">End page<input id="edit-end-page"></label><label class="wide" for="edit-affiliations">Affiliations<textarea id="edit-affiliations" placeholder="One affiliation per line"></textarea></label><label class="wide" for="edit-types">Publication types<textarea id="edit-types" placeholder="One type per line"></textarea></label><label for="edit-projects">Projects<textarea id="edit-projects" placeholder="One project per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label><label for="edit-programmes">Programmes<textarea id="edit-programmes" placeholder="One programme per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label></div></div><div class="dialog-actions"><button id="cancel-editor" type="button">Cancel</button><button id="save-record" class="primary" type="submit">Save record</button></div></form></dialog>
-<footer class="foot"><span>Centre for Kidney Research · Publication register</span><span>Public metadata from PubMed · Last checked <span id="footer-date">14 September 2026</span></span></footer>
+<footer class="foot"><span>Centre for Kidney Research · Publication register</span><span>Public metadata from PubMed and Scopus. Last checked <span id="footer-date">14 September 2026</span></span></footer>
 <noscript><p>This searchable collection requires JavaScript. Enable it in your browser to view the publication records. No internet connection is needed to search the collection.</p></noscript>
 </main>
 <script src="config.js"></script>
@@ -567,7 +745,7 @@ function rebuildCollection() {
   }
   const years = records.map(record => Number(record.year)).filter(Boolean);
   $('total-stat').textContent = records.length.toLocaleString();
-  $('year-range').textContent = years.length ? `${Math.min(...years)}–${Math.max(...years)}` : '—';
+  $('year-range').textContent = years.length ? `${Math.min(...years)}-${Math.max(...years)}` : '-';
   $('matched-stat').textContent = records.filter(record => record.projects.length + record.programmes.length).length.toLocaleString();
   for (const id of ['last-updated', 'footer-date', 'print-date']) $(id).textContent = dateLabel(collectionMeta.checkedAt);
   $('coverage-count').textContent = records.length.toLocaleString();
@@ -584,11 +762,16 @@ function filter() {
     (!$('associated').checked || record.projects.length + record.programmes.length)
   );
   const order = $('sort').value;
+  const newest = (a, b) => Number(b.year) - Number(a.year) || b.id.localeCompare(a.id);
+  // Records without a Scopus count sort after every counted record, including those cited 0 times.
+  const cited = record => record.scopus_citations ?? -1;
   filtered.sort((a, b) => order === 'title'
     ? a.title.localeCompare(b.title)
     : order === 'old'
       ? Number(a.year) - Number(b.year) || a.id.localeCompare(b.id)
-      : Number(b.year) - Number(a.year) || b.id.localeCompare(a.id));
+      : order === 'cited'
+        ? cited(b) - cited(a) || newest(a, b)
+        : newest(a, b));
   page = 1;
   render();
 }
@@ -609,7 +792,7 @@ function publication(record) {
   let detail = ` · ${record.year}`;
   if (record.volume) detail += `; ${record.volume}`;
   if (record.issue) detail += `(${record.issue})`;
-  if (record.start_page) detail += `: ${record.start_page}${record.end_page ? `–${record.end_page}` : ''}`;
+  if (record.start_page) detail += `: ${record.start_page}${record.end_page ? `-${record.end_page}` : ''}`;
   citation.append(document.createTextNode(detail));
   body.append(citation);
   const badges = el('div', 'badges');
@@ -633,13 +816,7 @@ function publication(record) {
     scholar.title = 'Search Google Scholar for this exact title';
     links.append(scholar);
   }
-  if (record.scopus_citations !== null && record.scopus_url) {
-    const scopus = link(`Cited by ${record.scopus_citations.toLocaleString()} in Scopus ↗`, record.scopus_url);
-    scopus.className = 'cited-by';
-    if (record.scopus_citations_checked_at) scopus.title = `Scopus citation count, checked ${dateLabel(record.scopus_citations_checked_at)}`;
-    links.append(scopus);
-  }
-  links.append(el('span', '', record.pmid ? `PMID ${record.pmid}` : `Local record ${record.id}`));
+  links.append(el('span', 'pmid', record.pmid ? `PMID ${record.pmid}` : `Local record ${record.id}`));
   if (editorAccess && dataSource === 'database') {
     const edit = el('button', 'inline-edit', 'Edit record & associations');
     edit.type = 'button';
@@ -666,13 +843,23 @@ function publication(record) {
     for (const name of names) {
       const matches = evidence?.[name];
       details.append(el('p', '', matches?.length
-        ? `Suggested ${kind} ${displayName(name)} — ${matches.join('; ')}. Requires confirmation.`
+        ? `Suggested ${kind} ${displayName(name)} matched on ${matches.join('; ')}. Requires confirmation.`
         : `Manually assigned ${kind}: ${displayName(name)}.`));
     }
   }
   if (!record.projects.length && !record.programmes.length) details.append(el('p', '', 'No project or programme has been assigned.'));
   body.append(details);
   row.append(body);
+  const cites = el('div', 'cites');
+  if (record.scopus_citations !== null && record.scopus_url) {
+    const scopus = link('', record.scopus_url);
+    scopus.className = 'cited-by';
+    scopus.append(el('strong', '', record.scopus_citations.toLocaleString()), el('span', '', 'Scopus citations ↗'));
+    scopus.setAttribute('aria-label', `Cited by ${record.scopus_citations.toLocaleString()} in Scopus`);
+    if (record.scopus_citations_checked_at) scopus.title = `Scopus citation count, checked ${dateLabel(record.scopus_citations_checked_at)}`;
+    cites.append(scopus);
+  }
+  row.append(cites);
   return row;
 }
 
@@ -687,10 +874,14 @@ function render() {
     $('list').append(empty);
   } else {
     const fragment = document.createDocumentFragment();
-    (printing ? filtered : filtered.slice((page - 1) * perPage, page * perPage)).forEach(record => fragment.append(publication(record)));
+    (printing ? filtered : filtered.slice((page - 1) * perPage, page * perPage)).forEach((record, i) => {
+      const row = publication(record);
+      row.style.setProperty('--i', i);
+      fragment.append(row);
+    });
     $('list').append(fragment);
   }
-  $('page-info').textContent = filtered.length ? `Showing ${(page - 1) * perPage + 1}–${Math.min(page * perPage, filtered.length)} · Page ${page} of ${pages}` : '0 results';
+  $('page-info').textContent = filtered.length ? `Showing ${(page - 1) * perPage + 1}-${Math.min(page * perPage, filtered.length)} of ${filtered.length.toLocaleString()} · Page ${page} of ${pages}` : '0 results';
   $('prev').disabled = page === 1;
   $('next').disabled = page === pages;
   $('export').disabled = !filtered.length;
