@@ -198,6 +198,22 @@ on public.publication_history for select
 to authenticated
 using ((select public.is_publication_editor()));
 
+-- LinkedIn posts scheduled through Buffer (scripts/social_posts.py). One row per publication that
+-- has been handled, so nothing is announced twice. Only the service key used by the GitHub Action
+-- can read or write it: RLS is on and there are no policies for anon or authenticated users.
+create table if not exists public.social_posts (
+  publication_id text primary key references public.publications(id) on delete cascade,
+  status text not null check (status in ('scheduling', 'scheduled', 'skipped', 'failed')),
+  buffer_post_id text,
+  due_at timestamptz,
+  post_text text,
+  note text,
+  created_at timestamptz not null default now()
+);
+alter table public.social_posts enable row level security;
+revoke all on public.social_posts from anon, authenticated;
+grant select, insert, update, delete on public.social_posts to service_role;
+
 -- Supabase may create this helper when automatic RLS is enabled. It is an
 -- administrative trigger function and should not be callable through the API.
 do $do$
