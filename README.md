@@ -9,6 +9,7 @@ repository root/
 │   ├── update_publications.py
 │   ├── sync_database.py
 │   ├── scopus_citations.py
+│   ├── social_posts.py
 │   ├── citations_common.py
 │   └── test_*.py
 ├── supabase/schema.sql
@@ -102,6 +103,43 @@ python3 scripts/sync_database.py --scopus-only --scopus-max-lookups 25
 4. For the weekly run, add repository secrets `SCOPUS_API_KEY` (and `SCOPUS_INSTTOKEN` if you have one). Without `SCOPUS_API_KEY` the weekly run skips Scopus. GitHub's servers are outside your institution's network, so a key without an institutional token may be refused there (HTTP 401/403); the log then says so and the rest of the update is unaffected.
 
 `SCOPUS_MAX_LOOKUPS` (repository variable, default 2000) limits records per run; the API quota is 20,000 requests a week. Citation counts are never overwritten by a failed lookup, and `--no-citations` skips the Scopus refresh.
+
+## 6. LinkedIn posts for new publications
+
+After each weekly update, `scripts/social_posts.py` writes a LinkedIn post for every publication added since the previous run and schedules it on the CKR LinkedIn page through [Buffer](https://buffer.com). Posts go out on weekdays at 9am, 12pm and 3pm Sydney time, three hours apart. A larger batch carries over to the following days, and a new batch always starts at least three hours after the last post already queued. Public holidays are not skipped.
+
+Each post has a two- or three-sentence plain-language summary that Claude (`claude-opus-5-5`) writes from the PubMed abstract. Below the summary come the title, the first author and journal, a DOI link (or a PubMed link if there is no DOI), and the hashtags. Posts are scheduled without review. Edit or delete them in Buffer's queue before they go out if needed.
+
+- Only publications added to the register on or after `SOCIAL_POSTS_SINCE` are posted, so the existing collection is never announced.
+- Papers from before last calendar year are skipped. PubMed sometimes adds older papers late.
+- At most 10 posts are scheduled per run. Buffer's free plan holds 10 scheduled posts per channel. If the queue is full, the remaining papers wait for the next run.
+- The `social_posts` table records every publication already handled, so nothing is posted twice. It is only readable with the secret key. Its `status` column holds one of these values:
+  - `scheduled`
+  - `skipped`
+  - `failed`: Buffer refused the post. The reason is in `note`.
+  - `scheduling`: the run stopped part-way. Check Buffer by hand.
+
+  To retry a publication, delete its row.
+
+**Set up.**
+
+1. Run the updated `supabase/schema.sql` in the Supabase SQL editor. It is safe to re-run, and it adds the `social_posts` table.
+2. In Buffer, connect the CKR LinkedIn **page** as a channel. Then create an API key in [Settings → API](https://publish.buffer.com/settings/api).
+3. Create an Anthropic API key at [platform.claude.com](https://platform.claude.com). Each post costs well under one cent.
+4. Find the Buffer IDs on your own computer:
+
+```bash
+export BUFFER_API_KEY='BUFFER_KEY'
+python3 scripts/social_posts.py --list-channels
+```
+
+5. In **GitHub → Settings → Secrets and variables → Actions**, add:
+   - repository secrets: `BUFFER_API_KEY` and `ANTHROPIC_API_KEY`;
+   - repository variables: `BUFFER_ORGANIZATION_ID` and `BUFFER_CHANNEL_ID` (the LinkedIn page's channel);
+   - repository variable `SOCIAL_POSTS_SINCE`: the date posting starts, e.g. `2026-10-05`.
+6. Test it: run the workflow by hand with **Write the LinkedIn posts … but schedule nothing** ticked, and read the posts in the log.
+
+Until all three of `BUFFER_API_KEY`, `ANTHROPIC_API_KEY` and `SOCIAL_POSTS_SINCE` are set, the step does nothing.
 
 ## Editing publications
 

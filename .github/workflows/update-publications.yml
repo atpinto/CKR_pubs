@@ -16,6 +16,11 @@ on:
         required: false
         type: boolean
         default: false
+      social_dry_run:
+        description: "Write the LinkedIn posts and show them in the log, but schedule nothing"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -68,3 +73,27 @@ jobs:
           git add publications.csv
           git commit -m "Update publications from PubMed ($(date -u +%F))"
           git push
+
+      - name: Schedule LinkedIn posts for new publications
+        if: ${{ !inputs.seed_database }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
+          NCBI_EMAIL: ${{ vars.NCBI_EMAIL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
+          BUFFER_ORGANIZATION_ID: ${{ vars.BUFFER_ORGANIZATION_ID }}
+          BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+          SOCIAL_POSTS_SINCE: ${{ vars.SOCIAL_POSTS_SINCE }}
+        run: |
+          if [ -z "$BUFFER_API_KEY" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$SOCIAL_POSTS_SINCE" ]; then
+            echo "LinkedIn posting is not set up (see README section 6); skipping."
+            exit 0
+          fi
+          pip install --quiet anthropic
+          if [ "${{ inputs.social_dry_run }}" = "true" ]; then
+            python scripts/social_posts.py --dry-run
+          else
+            python scripts/social_posts.py
+          fi
