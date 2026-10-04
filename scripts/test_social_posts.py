@@ -51,17 +51,24 @@ class ComposeTests(unittest.TestCase):
     }
 
     def test_post_layout(self) -> None:
-        text = sp.compose_post(self.record, "A short summary.")
+        text = sp.compose_post(self.record, "A short summary.", ["Nephrology", "PaediatricHealth"])
         self.assertIn("A short summary.", text)
         self.assertIn("Guha et al. · Kidney international (2026)", text)
         self.assertIn("Read the paper: https://doi.org/10.1016/j.kint.2026.01.001", text)
-        self.assertTrue(text.endswith(sp.HASHTAGS))
+        self.assertTrue(text.endswith("#KidneyResearch #Nephrology #PaediatricHealth"))
 
     def test_pubmed_link_without_doi(self) -> None:
         record = {**self.record, "doi": "", "authors": ["Guha, Chandana"]}
-        text = sp.compose_post(record, "Summary.")
+        text = sp.compose_post(record, "Summary.", [])
         self.assertIn("https://pubmed.ncbi.nlm.nih.gov/42760016/", text)
         self.assertIn("Guha · Kidney", text)
+
+    def test_hashtags_are_cleaned(self) -> None:
+        line = sp.hashtag_line(["#PublicHealth", "publichealth", "Kidney Research", "KidneyResearch", "Ageing", "A", "Frailty", "Extra"])
+        self.assertEqual(line, "#KidneyResearch #PublicHealth #Ageing #Frailty")
+
+    def test_centre_tag_alone_when_none_suggested(self) -> None:
+        self.assertEqual(sp.hashtag_line([]), "#KidneyResearch")
 
 
 if __name__ == "__main__":

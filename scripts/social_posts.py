@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import sys
 import urllib.error
@@ -26,20 +27,37 @@ POST_GAP = timedelta(hours=3)
 # Leave Buffer a margin before the first post of a run.
 MIN_LEAD = timedelta(minutes=15)
 LINKEDIN_LIMIT = 3000
-HASHTAGS = "#KidneyResearch #Nephrology #KidneyHealth"
+# Every post carries the centre's tag; Claude adds up to MAX_TOPIC_TAGS that fit the paper.
+CENTRE_HASHTAG = "#KidneyResearch"
+MAX_TOPIC_TAGS = 3
+HASHTAG_WORD = re.compile(r"^[A-Za-z][A-Za-z0-9]{1,39}$")
 MODEL = "claude-opus-5-5"
 
 SUMMARY_PROMPT = """You write LinkedIn posts for the Centre for Kidney Research (CKR) at The Children's \
-Hospital at Westmead, Sydney. Each post announces one newly published paper co-authored by CKR researchers.
+Hospital at Westmead, Sydney. Each post announces one newly published paper co-authored by CKR researchers. \
+CKR researchers publish on many topics besides kidney disease, such as ageing, public health and dermatology.
 
-Write only the summary paragraph of the post: two or three plain-language sentences (at most 450 \
-characters) saying what the study looked at and what it found or proposes. The audience is clinicians, \
-researchers, patients and families.
+Return two things:
 
+summary: two or three plain-language sentences (at most 450 characters) saying what the study looked at and \
+what it found or proposes. The audience is clinicians, researchers, patients and families.
 - Use only what the title and abstract state. Do not add numbers, claims or implications they do not contain.
 - If there is no abstract, describe the topic from the title without stating any findings.
 - Australian English, no hashtags, no emoji, no links, no author names, no title, no "we are proud" phrasing.
-- Output the paragraph and nothing else."""
+
+hashtags: two or three widely used LinkedIn hashtags for the paper's actual topic, written as single words \
+without the # sign (for example Nephrology, KidneyTransplant, HealthyAgeing, PublicHealth). Choose kidney \
+hashtags only for papers about the kidney. Do not include KidneyResearch; it is added to every post."""
+
+SUMMARY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "summary": {"type": "string"},
+        "hashtags": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["summary", "hashtags"],
+    "additionalProperties": False,
+}
 
 
 def sydney_slot(day: date, hour: int) -> datetime:
@@ -80,7 +98,22 @@ def paper_url(record: dict[str, object]) -> str:
     return f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else ""
 
 
-def compose_post(record: dict[str, object], summary: str) -> str:
+def hashtag_line(topic_tags: list[str]) -> str:
+    """The centre's tag plus up to MAX_TOPIC_TAGS valid, distinct topic tags."""
+    tags = [CENTRE_HASHTAG]
+    seen = {CENTRE_HASHTAG.lower()}
+    for raw in topic_tags:
+        word = str(raw).strip().lstrip("#")
+        if not HASHTAG_WORD.match(word) or "#" + word.lower() in seen:
+            continue
+        tags.append("#" + word)
+        seen.add("#" + word.lower())
+        if len(tags) > MAX_TOPIC_TAGS:
+            break
+    return " ".join(tags)
+
+
+def compose_post(record: dict[str, object], summary: str, topic_tags: list[str]) -> str:
     authors = [str(name) for name in record.get("authors") or []]
     surname = first_author_surname(authors)
     byline = surname + (" et al." if len(authors) > 1 else "") if surname else ""
@@ -96,7 +129,7 @@ def compose_post(record: dict[str, object], summary: str) -> str:
     ]
     if url:
         lines += ["", "Read the paper: " + url]
-    lines += ["", HASHTAGS]
+    lines += ["", hashtag_line(topic_tags)]
     return "\n".join(lines)
 
 
@@ -115,13 +148,14 @@ def fetch_abstract(pubmed: PubMedClient, pmid: str) -> str:
     return "\n".join(parts)
 
 
-def write_summary(client: object, record: dict[str, object], abstract: str) -> str:
+def write_summary(client: object, record: dict[str, object], abstract: str) -> tuple[str, list[str]]:
+    """Claude's summary paragraph and topic hashtags for one paper."""
     content = f"Title: {record.get('title')}\nJournal: {record.get('journal')} ({record.get('year')})\n\n"
     content += f"Abstract:\n{abstract}" if abstract else "Abstract: (none available)"
     response = client.beta.messages.create(
         model=MODEL,
         max_tokens=4000,
-        output_config={"effort": "low"},
+        output_config={"effort": "low", "format": {"type": "json_schema", "schema": SUMMARY_SCHEMA}},
         betas=["server-side-fallback-2026-07-01"],
         fallbacks="default",
         system=SUMMARY_PROMPT,
@@ -131,10 +165,11 @@ def write_summary(client: object, record: dict[str, object], abstract: str) -> s
         raise RuntimeError("Claude declined to summarise this abstract.")
     if response.stop_reason == "max_tokens":
         raise RuntimeError("The summary was cut off.")
-    summary = "".join(block.text for block in response.content if block.type == "text").strip()
+    data = json.loads(next(block.text for block in response.content if block.type == "text"))
+    summary = str(data.get("summary") or "").strip()
     if not summary:
         raise RuntimeError("Claude returned an empty summary.")
-    return summary
+    return summary, [str(tag) for tag in data.get("hashtags") or []]
 
 
 class BufferClient:
@@ -322,8 +357,10 @@ def main() -> int:
             record_id = str(record["id"])
             title = str(record.get("title") or "")
             try:
-                summary = write_summary(claude, record, fetch_abstract(pubmed, str(record.get("pmid") or "")))
-                text = compose_post(record, summary)
+                summary, topic_tags = write_summary(
+                    claude, record, fetch_abstract(pubmed, str(record.get("pmid") or ""))
+                )
+                text = compose_post(record, summary, topic_tags)
                 if len(text) > LINKEDIN_LIMIT:
                     raise RuntimeError(f"Post is {len(text)} characters, over LinkedIn's {LINKEDIN_LIMIT}.")
             except Exception as error:
@@ -359,6 +396,10 @@ def main() -> int:
 
         if not args.dry_run:
             print(f"Social posts: {scheduled} scheduled, {failed} failed.")
+        if failed:
+            # Fail the run so GitHub emails the owner; any other posts were still scheduled.
+            print(f"{failed} post(s) could not be written or scheduled; see the warnings above.", file=sys.stderr)
+            return 1
         return 0
     except Exception as error:
         print(f"Social posting failed: {error}", file=sys.stderr)
