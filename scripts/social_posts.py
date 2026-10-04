@@ -309,6 +309,12 @@ def main() -> int:
             buffer = BufferClient()
             buffer.require_channel()
             last = buffer.last_scheduled()
+        elif os.environ.get("BUFFER_API_KEY", "").strip():
+            # Read-only check that the Buffer key and channel work; the dry run still schedules nothing.
+            check = BufferClient()
+            check.require_channel()
+            last = check.last_scheduled()
+            print(f"Buffer connection OK; last post already queued: {last or 'none'}.\n")
         earliest = first_earliest(datetime.now(timezone.utc), last)
 
         scheduled = failed = 0

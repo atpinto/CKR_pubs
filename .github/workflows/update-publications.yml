@@ -21,6 +21,11 @@ on:
         required: false
         type: boolean
         default: false
+      preview_posts_since:
+        description: "Preview only: skip the PubMed update and show posts for publications added since this date (e.g. 2026-09-28); nothing is scheduled"
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -44,6 +49,7 @@ jobs:
           python-version: "3.13"
 
       - name: Update database and CSV backup
+        if: ${{ !inputs.preview_posts_since }}
         env:
           NCBI_API_KEY: ${{ secrets.NCBI_API_KEY }}
           NCBI_EMAIL: ${{ vars.NCBI_EMAIL }}
@@ -62,6 +68,7 @@ jobs:
           fi
 
       - name: Commit updated CSV
+        if: ${{ !inputs.preview_posts_since }}
         run: |
           if git diff --quiet -- publications.csv; then
             echo "No publication changes"
@@ -85,14 +92,14 @@ jobs:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           BUFFER_ORGANIZATION_ID: ${{ vars.BUFFER_ORGANIZATION_ID }}
           BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
-          SOCIAL_POSTS_SINCE: ${{ vars.SOCIAL_POSTS_SINCE }}
+          SOCIAL_POSTS_SINCE: ${{ inputs.preview_posts_since || vars.SOCIAL_POSTS_SINCE }}
         run: |
           if [ -z "$BUFFER_API_KEY" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$SOCIAL_POSTS_SINCE" ]; then
             echo "LinkedIn posting is not set up (see README section 6); skipping."
             exit 0
           fi
           pip install --quiet anthropic
-          if [ "${{ inputs.social_dry_run }}" = "true" ]; then
+          if [ "${{ inputs.social_dry_run }}" = "true" ] || [ -n "${{ inputs.preview_posts_since }}" ]; then
             python scripts/social_posts.py --dry-run
           else
             python scripts/social_posts.py
