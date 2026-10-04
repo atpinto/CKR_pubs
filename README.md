@@ -141,6 +141,8 @@ python3 scripts/social_posts.py --list-channels
 
 Until all three of `BUFFER_API_KEY`, `ANTHROPIC_API_KEY` and `SOCIAL_POSTS_SINCE` are set, the step does nothing.
 
+To see example posts at any time without updating PubMed, run the workflow by hand and fill in **Preview only** with a past date, e.g. last Monday. It writes posts for publications added since that date into the log, checks the Buffer connection read-only, and schedules nothing. Avoid running the full workflow by hand on a day before `SOCIAL_POSTS_SINCE`. Papers it adds would be dated before the start date and never posted.
+
 ## Editing publications
 
 Visitors have read-only access. An approved editor selects **Editor sign in**, enters their email and password, and then uses **Add publication** or **Edit record & associations**. Clicking **Save record** writes the record directly to Supabase; no CSV download or GitHub commit is required.
