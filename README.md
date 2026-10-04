@@ -108,7 +108,7 @@ python3 scripts/sync_database.py --scopus-only --scopus-max-lookups 25
 
 After each weekly update, `scripts/social_posts.py` writes a LinkedIn post for every publication added since the previous run and schedules it on the CKR LinkedIn page through [Buffer](https://buffer.com). Posts go out on weekdays at 9am, 12pm and 3pm Sydney time, three hours apart. A larger batch carries over to the following days, and a new batch always starts at least three hours after the last post already queued. Public holidays are not skipped.
 
-Each post has a two- or three-sentence plain-language summary that Claude (`claude-opus-5-5`) writes from the PubMed abstract. Below the summary come the title, the first author and journal, a DOI link (or a PubMed link if there is no DOI), and the hashtags. Posts are scheduled without review. Edit or delete them in Buffer's queue before they go out if needed.
+Each post has a two- or three-sentence plain-language summary that Claude (`claude-opus-5-5`) writes from the PubMed abstract. Below the summary come the title, the first author and journal, a DOI link (or a PubMed link if there is no DOI), and the hashtags: `#KidneyResearch` plus two or three that Claude picks for the paper's topic. Posts are scheduled without review. Edit or delete them in Buffer's queue before they go out if needed.
 
 - Only publications added to the register on or after `SOCIAL_POSTS_SINCE` are posted, so the existing collection is never announced.
 - Papers from before last calendar year are skipped. PubMed sometimes adds older papers late.
@@ -138,6 +138,8 @@ python3 scripts/social_posts.py --list-channels
    - repository variables: `BUFFER_ORGANIZATION_ID` and `BUFFER_CHANNEL_ID` (the LinkedIn page's channel);
    - repository variable `SOCIAL_POSTS_SINCE`: the date posting starts, e.g. `2026-10-05`.
 6. Test it: run the workflow by hand with **Write the LinkedIn posts … but schedule nothing** ticked, and read the posts in the log.
+
+If any post cannot be written or scheduled, the run is marked as failed so GitHub emails you; the other posts are still scheduled.
 
 Until all three of `BUFFER_API_KEY`, `ANTHROPIC_API_KEY` and `SOCIAL_POSTS_SINCE` are set, the step does nothing.
 
