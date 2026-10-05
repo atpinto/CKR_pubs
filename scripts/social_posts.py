@@ -84,6 +84,15 @@ def first_earliest(now: datetime, last_scheduled: datetime | None) -> datetime:
     return earliest
 
 
+def since_timestamp(since: str) -> str:
+    """SOCIAL_POSTS_SINCE as an exact timestamp. A plain date means midnight in Sydney: the Monday
+    7am run happens on Sunday in UTC, so a UTC date would miss that run's papers."""
+    value = since.strip()
+    if len(value) == 10:
+        return datetime.combine(date.fromisoformat(value), time(0), SYDNEY).isoformat()
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).isoformat()
+
+
 def first_author_surname(authors: list[str]) -> str:
     if not authors:
         return ""
@@ -273,7 +282,7 @@ class SocialPostLog:
     def candidates(self, since: str) -> list[dict[str, object]]:
         query = urllib.parse.urlencode({
             "select": "id,pmid,title,authors,year,journal,doi,created_at",
-            "created_at": f"gte.{since}",
+            "created_at": f"gte.{since_timestamp(since)}",
             "order": "created_at.asc,id.asc",
         })
         return self.supabase.request("GET", f"/rest/v1/publications?{query}") or []

@@ -39,6 +39,15 @@ class ScheduleTests(unittest.TestCase):
         # Sydney moves to daylight time on Sunday 4 October 2026.
         self.assertEqual(sp.next_slot(sydney(5, 0)).utcoffset(), timedelta(hours=11))
 
+    def test_start_date_is_midnight_in_sydney(self) -> None:
+        self.assertEqual(sp.since_timestamp("2026-10-05"), "2026-10-05T00:00:00+11:00")
+        # The Monday 5 October run added its paper at 22:50 UTC on Sunday 4 October.
+        added = datetime(2026, 10, 4, 22, 50, tzinfo=timezone.utc)
+        self.assertGreaterEqual(added, datetime.fromisoformat(sp.since_timestamp("2026-10-05")))
+
+    def test_full_timestamp_is_kept(self) -> None:
+        self.assertEqual(sp.since_timestamp("2026-10-05T00:00:00Z"), "2026-10-05T00:00:00+00:00")
+
 
 class ComposeTests(unittest.TestCase):
     record = {
