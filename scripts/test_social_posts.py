@@ -80,5 +80,40 @@ class ComposeTests(unittest.TestCase):
         self.assertEqual(sp.hashtag_line([]), "#KidneyResearch")
 
 
+class XPostTests(unittest.TestCase):
+    record = {"doi": "10.1016/j.healthplace.2026.103741", "pmid": "42800220"}
+
+    def test_x_post_layout(self) -> None:
+        text = sp.compose_x_post(self.record, "Few ageing studies measure housing quality.")
+        self.assertEqual(
+            text,
+            "New CKR paper: Few ageing studies measure housing quality.\n\n"
+            "https://doi.org/10.1016/j.healthplace.2026.103741\n\n#KidneyResearch",
+        )
+
+    def test_links_count_as_23_characters(self) -> None:
+        self.assertEqual(sp.x_length("a https://doi.org/10.1016/j.healthplace.2026.103741"), 2 + 23)
+
+    def test_long_sentence_is_shortened_to_fit(self) -> None:
+        text = sp.compose_x_post(self.record, "word " * 80)
+        self.assertLessEqual(sp.x_length(text), 280)
+        self.assertIn("\u2026\n\nhttps://doi.org/", text)
+
+    def test_services_get_their_own_text(self) -> None:
+        record = {**self.record, "title": "T", "authors": ["Guha, C"], "journal": "J", "year": "2026"}
+        written = {"summary": "Long summary.", "short_summary": "Short.", "hashtags": ["Ageing"]}
+        self.assertTrue(sp.post_text("twitter", record, written).startswith("New CKR paper: Short."))
+        self.assertIn("Long summary.", sp.post_text("facebook", record, written))
+        self.assertEqual(sp.post_text("facebook", record, written), sp.post_text("linkedin", record, written))
+
+
+class ChannelTests(unittest.TestCase):
+    def test_new_channels_only(self) -> None:
+        self.assertEqual(sp.channels_to_post({"li"}, ["li", "fb", "x"]), ["fb", "x"])
+
+    def test_empty_channel_covers_all(self) -> None:
+        self.assertEqual(sp.channels_to_post({""}, ["li", "fb"]), [])
+
+
 if __name__ == "__main__":
     unittest.main()

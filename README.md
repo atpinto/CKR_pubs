@@ -104,27 +104,27 @@ python3 scripts/sync_database.py --scopus-only --scopus-max-lookups 25
 
 `SCOPUS_MAX_LOOKUPS` (repository variable, default 2000) limits records per run; the API quota is 20,000 requests a week. Citation counts are never overwritten by a failed lookup, and `--no-citations` skips the Scopus refresh.
 
-## 6. LinkedIn posts for new publications
+## 6. Social media posts for new publications
 
-After each weekly update, `scripts/social_posts.py` writes a LinkedIn post for every publication added since the previous run and schedules it on the CKR LinkedIn page through [Buffer](https://buffer.com). Posts go out on weekdays at 9am, 12pm and 3pm Sydney time, three hours apart. A larger batch carries over to the following days, and a new batch always starts at least three hours after the last post already queued. Public holidays are not skipped.
+After each weekly update, `scripts/social_posts.py` writes a post for every publication added since the previous run and schedules it through [Buffer](https://buffer.com) on each configured channel: the CKR LinkedIn page, Facebook page and X account. Each paper goes out at the same time on every channel. Posts go out on weekdays at 9am, 12pm and 3pm Sydney time, three hours apart. A larger batch carries over to the following days, and a new batch always starts at least three hours after the last post already queued. Public holidays are not skipped.
 
-Each post has a two- or three-sentence plain-language summary that Claude (`claude-opus-5-5`) writes from the PubMed abstract. Below the summary come the title, the first author and journal, a DOI link (or a PubMed link if there is no DOI), and the hashtags: `#KidneyResearch` plus two or three that Claude picks for the paper's topic. Posts are scheduled without review. Edit or delete them in Buffer's queue before they go out if needed.
+On LinkedIn and Facebook, each post has a two- or three-sentence plain-language summary that Claude (`claude-opus-5-5`) writes from the PubMed abstract. Below the summary come the title, the first author and journal, a DOI link (or a PubMed link if there is no DOI), and the hashtags: `#KidneyResearch` plus two or three that Claude picks for the paper's topic. On X, the post is one short sentence, the link and `#KidneyResearch`, kept within X's 280 characters. Posts are scheduled without review. Edit or delete them in Buffer's queue before they go out if needed.
 
 - Only publications added to the register on or after `SOCIAL_POSTS_SINCE` are posted, so the existing collection is never announced.
 - Papers from before last calendar year are skipped. PubMed sometimes adds older papers late.
 - At most 10 posts are scheduled per run. Buffer's free plan holds 10 scheduled posts per channel. If the queue is full, the remaining papers wait for the next run.
-- The `social_posts` table records every publication already handled, so nothing is posted twice. It is only readable with the secret key. Its `status` column holds one of these values:
+- The `social_posts` table records every publication already handled on each channel, so nothing is posted twice. A row with an empty `channel_id` covers every channel. Skipped papers are recorded that way, and so are papers posted before Facebook and X were added. It is only readable with the secret key. Its `status` column holds one of these values:
   - `scheduled`
   - `skipped`
   - `failed`: Buffer refused the post. The reason is in `note`.
   - `scheduling`: the run stopped part-way. Check Buffer by hand.
 
-  To retry a publication, delete its row.
+  To retry a publication on a channel, delete its row.
 
 **Set up.**
 
-1. Run the updated `supabase/schema.sql` in the Supabase SQL editor. It is safe to re-run, and it adds the `social_posts` table.
-2. In Buffer, connect the CKR LinkedIn **page** as a channel. Then create an API key in [Settings → API](https://publish.buffer.com/settings/api).
+1. Run the updated `supabase/schema.sql` in the Supabase SQL editor. It is safe to re-run. It adds the `social_posts` table, or updates an older version of it to track each channel.
+2. In Buffer, connect the CKR LinkedIn **page**, Facebook **page** and X account as channels. The free plan allows 3 channels. Then create an API key in [Settings → API](https://publish.buffer.com/settings/api).
 3. Create an Anthropic API key at [platform.claude.com](https://platform.claude.com). Each post costs well under one cent.
 4. Find the Buffer IDs on your own computer:
 
@@ -135,9 +135,9 @@ python3 scripts/social_posts.py --list-channels
 
 5. In **GitHub → Settings → Secrets and variables → Actions**, add:
    - repository secrets: `BUFFER_API_KEY` and `ANTHROPIC_API_KEY`;
-   - repository variables: `BUFFER_ORGANIZATION_ID` and `BUFFER_CHANNEL_ID` (the LinkedIn page's channel);
+   - repository variables: `BUFFER_ORGANIZATION_ID`, and `BUFFER_CHANNEL_IDS` with the channel ids to post to, separated by commas. (`BUFFER_CHANNEL_ID`, a single channel, still works when `BUFFER_CHANNEL_IDS` is not set.)
    - repository variable `SOCIAL_POSTS_SINCE`: the date posting starts, e.g. `2026-10-05`.
-6. Test it: run the workflow by hand with **Write the LinkedIn posts … but schedule nothing** ticked, and read the posts in the log.
+6. Test it: run the workflow by hand with **Preview only** set to a past date, and read the posts in the log.
 
 If any post cannot be written or scheduled, the run is marked as failed so GitHub emails you; the other posts are still scheduled.
 

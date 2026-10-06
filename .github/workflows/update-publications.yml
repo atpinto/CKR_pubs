@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       social_dry_run:
-        description: "Write the LinkedIn posts and show them in the log, but schedule nothing"
+        description: "Write the social media posts and show them in the log, but schedule nothing"
         required: false
         type: boolean
         default: false
@@ -81,7 +81,7 @@ jobs:
           git commit -m "Update publications from PubMed ($(date -u +%F))"
           git push
 
-      - name: Schedule LinkedIn posts for new publications
+      - name: Schedule social media posts for new publications
         if: ${{ !inputs.seed_database }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -92,6 +92,7 @@ jobs:
           BUFFER_API_KEY: ${{ secrets.BUFFER_API_KEY }}
           BUFFER_ORGANIZATION_ID: ${{ vars.BUFFER_ORGANIZATION_ID }}
           BUFFER_CHANNEL_ID: ${{ vars.BUFFER_CHANNEL_ID }}
+          BUFFER_CHANNEL_IDS: ${{ vars.BUFFER_CHANNEL_IDS }}
           SOCIAL_POSTS_SINCE: ${{ inputs.preview_posts_since || vars.SOCIAL_POSTS_SINCE }}
         run: |
           if [ -z "$BUFFER_API_KEY" ] || [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$SOCIAL_POSTS_SINCE" ]; then
