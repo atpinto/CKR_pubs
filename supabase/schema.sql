@@ -198,18 +198,33 @@ on public.publication_history for select
 to authenticated
 using ((select public.is_publication_editor()));
 
--- LinkedIn posts scheduled through Buffer (scripts/social_posts.py). One row per publication that
--- has been handled, so nothing is announced twice. Only the service key used by the GitHub Action
--- can read or write it: RLS is on and there are no policies for anon or authenticated users.
+-- Social media posts scheduled through Buffer (scripts/social_posts.py). One row per publication and
+-- Buffer channel handled, so nothing is announced twice. An empty channel_id covers every channel
+-- (skipped papers, and papers posted before there was more than one channel). Only the service key
+-- used by the GitHub Action can read or write it: RLS is on and there are no policies for anon or
+-- authenticated users.
 create table if not exists public.social_posts (
-  publication_id text primary key references public.publications(id) on delete cascade,
+  publication_id text not null references public.publications(id) on delete cascade,
+  channel_id text not null default '',
   status text not null check (status in ('scheduling', 'scheduled', 'skipped', 'failed')),
   buffer_post_id text,
   due_at timestamptz,
   post_text text,
   note text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  primary key (publication_id, channel_id)
 );
+-- Databases created when the table had one row per publication: add channel_id and widen the key.
+alter table public.social_posts add column if not exists channel_id text not null default '';
+do $do$
+begin
+  if (select array_length(conkey, 1) from pg_constraint
+      where conrelid = 'public.social_posts'::regclass and contype = 'p') = 1 then
+    alter table public.social_posts drop constraint social_posts_pkey;
+    alter table public.social_posts add primary key (publication_id, channel_id);
+  end if;
+end;
+$do$;
 alter table public.social_posts enable row level security;
 revoke all on public.social_posts from anon, authenticated;
 grant select, insert, update, delete on public.social_posts to service_role;

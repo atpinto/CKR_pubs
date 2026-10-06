@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Schedule LinkedIn posts (through Buffer) for publications newly added to the register."""
+"""Schedule social media posts (LinkedIn, Facebook and X, through Buffer) for publications newly added
+to the register."""
 
 from __future__ import annotations
 
@@ -26,18 +27,21 @@ POST_HOURS = (9, 12, 15)
 POST_GAP = timedelta(hours=3)
 # Leave Buffer a margin before the first post of a run.
 MIN_LEAD = timedelta(minutes=15)
-LINKEDIN_LIMIT = 3000
+# Post length limits per Buffer service. X counts every link as 23 characters.
+TEXT_LIMITS = {"linkedin": 3000, "facebook": 5000, "twitter": 280}
+X_LINK_LENGTH = 23
+URL_PATTERN = re.compile(r"https?://\S+")
 # Every post carries the centre's tag; Claude adds up to MAX_TOPIC_TAGS that fit the paper.
 CENTRE_HASHTAG = "#KidneyResearch"
 MAX_TOPIC_TAGS = 3
 HASHTAG_WORD = re.compile(r"^[A-Za-z][A-Za-z0-9]{1,39}$")
 MODEL = "claude-opus-5-5"
 
-SUMMARY_PROMPT = """You write LinkedIn posts for the Centre for Kidney Research (CKR) at The Children's \
+SUMMARY_PROMPT = """You write social media posts for the Centre for Kidney Research (CKR) at The Children's \
 Hospital at Westmead, Sydney. Each post announces one newly published paper co-authored by CKR researchers. \
 CKR researchers publish on many topics besides kidney disease, such as ageing, public health and dermatology.
 
-Return two things:
+Return three things:
 
 summary: two or three plain-language sentences (at most 450 characters) saying what the study looked at and \
 what it found or proposes. The audience is clinicians, researchers, patients and families.
@@ -45,7 +49,10 @@ what it found or proposes. The audience is clinicians, researchers, patients and
 - If there is no abstract, describe the topic from the title without stating any findings.
 - Australian English, no hashtags, no emoji, no links, no author names, no title, no "we are proud" phrasing.
 
-hashtags: two or three widely used LinkedIn hashtags for the paper's actual topic, written as single words \
+short_summary: one plain-language sentence of at most 180 characters for X (Twitter), saying what the \
+study found or proposes, following the same rules.
+
+hashtags: two or three widely used hashtags for the paper's actual topic, written as single words \
 without the # sign (for example Nephrology, KidneyTransplant, HealthyAgeing, PublicHealth). Choose kidney \
 hashtags only for papers about the kidney. Do not include KidneyResearch; it is added to every post."""
 
@@ -53,9 +60,10 @@ SUMMARY_SCHEMA = {
     "type": "object",
     "properties": {
         "summary": {"type": "string"},
+        "short_summary": {"type": "string"},
         "hashtags": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["summary", "hashtags"],
+    "required": ["summary", "short_summary", "hashtags"],
     "additionalProperties": False,
 }
 
@@ -142,6 +150,27 @@ def compose_post(record: dict[str, object], summary: str, topic_tags: list[str])
     return "\n".join(lines)
 
 
+def x_length(text: str) -> int:
+    """Length as X counts it: every link is X_LINK_LENGTH characters."""
+    return len(URL_PATTERN.sub("x" * X_LINK_LENGTH, text))
+
+
+def compose_x_post(record: dict[str, object], short_summary: str) -> str:
+    """A post that fits X's limit, shortening the sentence at a word boundary if needed."""
+    url = paper_url(record)
+    tail = ("\n\n" + url if url else "") + "\n\n" + CENTRE_HASHTAG
+    sentence = short_summary.strip()
+    text = f"New CKR paper: {sentence}{tail}"
+    while x_length(text) > TEXT_LIMITS["twitter"] and " " in sentence:
+        sentence = sentence.rsplit(" ", 1)[0].rstrip(",;:")
+        text = f"New CKR paper: {sentence}\u2026{tail}"
+    return text
+
+
+def post_length(service: str, text: str) -> int:
+    return x_length(text) if service == "twitter" else len(text)
+
+
 def fetch_abstract(pubmed: PubMedClient, pmid: str) -> str:
     if not pmid:
         return ""
@@ -157,8 +186,8 @@ def fetch_abstract(pubmed: PubMedClient, pmid: str) -> str:
     return "\n".join(parts)
 
 
-def write_summary(client: object, record: dict[str, object], abstract: str) -> tuple[str, list[str]]:
-    """Claude's summary paragraph and topic hashtags for one paper."""
+def write_summary(client: object, record: dict[str, object], abstract: str) -> dict[str, object]:
+    """Claude's summary paragraph, one-sentence summary for X, and topic hashtags for one paper."""
     content = f"Title: {record.get('title')}\nJournal: {record.get('journal')} ({record.get('year')})\n\n"
     content += f"Abstract:\n{abstract}" if abstract else "Abstract: (none available)"
     response = client.beta.messages.create(
@@ -176,25 +205,53 @@ def write_summary(client: object, record: dict[str, object], abstract: str) -> t
         raise RuntimeError("The summary was cut off.")
     data = json.loads(next(block.text for block in response.content if block.type == "text"))
     summary = str(data.get("summary") or "").strip()
-    if not summary:
+    short_summary = str(data.get("short_summary") or "").strip()
+    if not summary or not short_summary:
         raise RuntimeError("Claude returned an empty summary.")
-    return summary, [str(tag) for tag in data.get("hashtags") or []]
+    return {
+        "summary": summary,
+        "short_summary": short_summary,
+        "hashtags": [str(tag) for tag in data.get("hashtags") or []],
+    }
+
+
+def post_text(service: str, record: dict[str, object], written: dict[str, object]) -> str:
+    if service == "twitter":
+        return compose_x_post(record, str(written["short_summary"]))
+    return compose_post(record, str(written["summary"]), list(written["hashtags"]))
 
 
 class BufferClient:
     def __init__(self) -> None:
         self.key = os.environ.get("BUFFER_API_KEY", "").strip()
         self.organization_id = os.environ.get("BUFFER_ORGANIZATION_ID", "").strip()
-        self.channel_id = os.environ.get("BUFFER_CHANNEL_ID", "").strip()
+        # BUFFER_CHANNEL_IDS lists every channel to post to; BUFFER_CHANNEL_ID is the older single-channel form.
+        configured = os.environ.get("BUFFER_CHANNEL_IDS", "") or os.environ.get("BUFFER_CHANNEL_ID", "")
+        self.channel_ids = [part.strip() for part in configured.split(",") if part.strip()]
         if not self.key:
             raise RuntimeError("BUFFER_API_KEY is required.")
 
-    def require_channel(self) -> None:
-        if not self.organization_id or not self.channel_id:
+    def channel_services(self) -> dict[str, str]:
+        """{channel id: service} for the configured channels, checked against the organisation."""
+        if not self.organization_id or not self.channel_ids:
             raise RuntimeError(
-                "BUFFER_ORGANIZATION_ID and BUFFER_CHANNEL_ID are required. "
+                "BUFFER_ORGANIZATION_ID and BUFFER_CHANNEL_IDS are required. "
                 "Run this script with --list-channels to find them."
             )
+        channels = self.query(
+            "query($org: OrganizationId!) { channels(input: {organizationId: $org}) { id service } }",
+            {"org": self.organization_id},
+        )["channels"]
+        known = {str(channel["id"]): str(channel["service"]) for channel in channels}
+        services = {}
+        for channel_id in self.channel_ids:
+            service = known.get(channel_id)
+            if service is None:
+                raise RuntimeError(f"Buffer channel {channel_id} is not in organisation {self.organization_id}.")
+            if service not in TEXT_LIMITS:
+                raise RuntimeError(f"Buffer channel {channel_id} is {service}; only {', '.join(TEXT_LIMITS)} are supported.")
+            services[channel_id] = service
+        return services
 
     def query(self, document: str, variables: dict[str, object] | None = None) -> dict[str, object]:
         body = json.dumps({"query": document, "variables": variables or {}}).encode("utf-8")
@@ -232,35 +289,40 @@ class BufferClient:
             found += [(organization, channel) for channel in channels]
         return found
 
-    def last_scheduled(self) -> datetime | None:
+    def last_scheduled(self, channel_id: str) -> datetime | None:
         data = self.query(
             "query($org: OrganizationId!, $channel: ChannelId!) { posts(first: 1, input: {"
             "organizationId: $org, filter: {status: [scheduled], channelIds: [$channel]}, "
             "sort: [{field: dueAt, direction: desc}]}) { edges { node { dueAt } } } }",
-            {"org": self.organization_id, "channel": self.channel_id},
+            {"org": self.organization_id, "channel": channel_id},
         )
         edges = data["posts"]["edges"]
         if not edges or not edges[0]["node"].get("dueAt"):
             return None
         return datetime.fromisoformat(edges[0]["node"]["dueAt"].replace("Z", "+00:00"))
 
-    def schedule(self, text: str, due_at: datetime, url: str, title: str) -> tuple[str | None, str]:
+    def schedule(
+        self, channel_id: str, service: str, text: str, due_at: datetime, url: str, title: str
+    ) -> tuple[str | None, str]:
         """Returns (post id, "") on success, or (None, error kind: message) when Buffer refuses."""
-        linkedin: dict[str, object] = {}
-        if url:
-            linkedin["linkAttachment"] = {"url": url, "title": title}
+        metadata: dict[str, object] = {}
+        link = {"linkAttachment": {"url": url, "title": title}} if url else {}
+        if service == "linkedin":
+            metadata["linkedin"] = link
+        elif service == "facebook":
+            metadata["facebook"] = {"type": "post", **link}
         data = self.query(
             "mutation($input: CreatePostInput!) { createPost(input: $input) {"
             " ... on PostActionSuccess { post { id dueAt } }"
             " ... on MutationError { __typename message } } }",
             {"input": {
                 "text": text,
-                "channelId": self.channel_id,
+                "channelId": channel_id,
                 "schedulingType": "automatic",
                 "mode": "customScheduled",
                 "dueAt": due_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
                 "aiAssisted": True,
-                "metadata": {"linkedin": linkedin},
+                "metadata": metadata,
             }},
         )
         result = data["createPost"]
@@ -270,14 +332,19 @@ class BufferClient:
 
 
 class SocialPostLog:
-    """The social_posts table records every publication already handled, so nothing posts twice."""
+    """The social_posts table records every publication already handled on each channel, so nothing
+    posts twice. A row with an empty channel_id covers all channels (skipped papers, and papers posted
+    before there was more than one channel)."""
 
     def __init__(self, supabase: SupabaseClient) -> None:
         self.supabase = supabase
 
-    def handled_ids(self) -> set[str]:
-        rows = self.supabase.request("GET", "/rest/v1/social_posts?select=publication_id&limit=100000")
-        return {str(row["publication_id"]) for row in rows or []}
+    def handled(self) -> dict[str, set[str]]:
+        rows = self.supabase.request("GET", "/rest/v1/social_posts?select=publication_id,channel_id&limit=100000")
+        handled: dict[str, set[str]] = {}
+        for row in rows or []:
+            handled.setdefault(str(row["publication_id"]), set()).add(str(row.get("channel_id") or ""))
+        return handled
 
     def candidates(self, since: str) -> list[dict[str, object]]:
         query = urllib.parse.urlencode({
@@ -287,18 +354,24 @@ class SocialPostLog:
         })
         return self.supabase.request("GET", f"/rest/v1/publications?{query}") or []
 
-    def record(self, publication_id: str, status: str, **values: object) -> None:
+    def record(self, publication_id: str, channel_id: str, status: str, **values: object) -> None:
         self.supabase.request(
             "POST",
-            "/rest/v1/social_posts?on_conflict=publication_id",
-            {"publication_id": publication_id, "status": status, **values},
+            "/rest/v1/social_posts?on_conflict=publication_id,channel_id",
+            {"publication_id": publication_id, "channel_id": channel_id, "status": status, **values},
             "resolution=merge-duplicates,return=minimal",
         )
 
-    def release(self, publication_id: str) -> None:
-        self.supabase.request(
-            "DELETE", f"/rest/v1/social_posts?publication_id=eq.{urllib.parse.quote(publication_id, safe='')}"
-        )
+    def release(self, publication_id: str, channel_id: str) -> None:
+        query = urllib.parse.urlencode({"publication_id": f"eq.{publication_id}", "channel_id": f"eq.{channel_id}"})
+        self.supabase.request("DELETE", f"/rest/v1/social_posts?{query}")
+
+
+def channels_to_post(handled: set[str], channel_ids: list[str]) -> list[str]:
+    """Configured channels this publication has not been handled on yet."""
+    if "" in handled:
+        return []
+    return [channel_id for channel_id in channel_ids if channel_id not in handled]
 
 
 def main() -> int:
@@ -314,8 +387,9 @@ def main() -> int:
                 print(
                     f"{channel['service']:<10} {channel.get('displayName') or channel['name']}\n"
                     f"  BUFFER_ORGANIZATION_ID={organization['id']}  ({organization['name']})\n"
-                    f"  BUFFER_CHANNEL_ID={channel['id']}"
+                    f"  channel id: {channel['id']}"
                 )
+            print("\nSet BUFFER_CHANNEL_IDS to the channel ids to post to, separated by commas.")
             return 0
 
         since = os.environ.get("SOCIAL_POSTS_SINCE", "").strip()
@@ -327,15 +401,21 @@ def main() -> int:
         min_year = datetime.now(SYDNEY).year - 1
 
         log = SocialPostLog(SupabaseClient())
-        handled = log.handled_ids()
-        pending = [record for record in log.candidates(since) if str(record["id"]) not in handled]
+        buffer = BufferClient()
+        services = buffer.channel_services()
+        channel_ids = list(services)
+        handled = log.handled()
+        pending = [
+            record for record in log.candidates(since)
+            if channels_to_post(handled.get(str(record["id"]), set()), channel_ids)
+        ]
         if not pending:
             print("No new publications to post.")
             return 0
 
         if not args.dry_run:
             for record in [r for r in pending if not str(r.get("year", "")).isdigit() or int(r["year"]) < min_year]:
-                log.record(str(record["id"]), "skipped", note=f"published {record.get('year')}, before {min_year}")
+                log.record(str(record["id"]), "", "skipped", note=f"published {record.get('year')}, before {min_year}")
                 print(f"Skipped (older paper, {record.get('year')}): {record.get('title')}")
         pending = [r for r in pending if str(r.get("year", "")).isdigit() and int(r["year"]) >= min_year]
         pending = pending[: max(args.max_posts, 0)]
@@ -347,61 +427,65 @@ def main() -> int:
 
         claude = anthropic.Anthropic()
         pubmed = PubMedClient()
-        buffer = None
-        last = None
-        if not args.dry_run:
-            buffer = BufferClient()
-            buffer.require_channel()
-            last = buffer.last_scheduled()
-        elif os.environ.get("BUFFER_API_KEY", "").strip():
-            # Read-only check that the Buffer key and channel work; the dry run still schedules nothing.
-            check = BufferClient()
-            check.require_channel()
-            last = check.last_scheduled()
-            print(f"Buffer connection OK; last post already queued: {last or 'none'}.\n")
-        earliest = first_earliest(datetime.now(timezone.utc), last)
+        now = datetime.now(timezone.utc)
+        earliest: dict[str, datetime] = {}
+        for channel_id, service in services.items():
+            last = buffer.last_scheduled(channel_id)
+            earliest[channel_id] = first_earliest(now, last)
+            print(f"Buffer {service} channel OK; last post already queued: {last or 'none'}.")
+        print()
+        full: set[str] = set()
 
         scheduled = failed = 0
         for record in pending:
             record_id = str(record["id"])
             title = str(record.get("title") or "")
+            todo = [
+                channel_id for channel_id in channels_to_post(handled.get(record_id, set()), channel_ids)
+                if channel_id not in full
+            ]
+            if not todo:
+                continue
             try:
-                summary, topic_tags = write_summary(
-                    claude, record, fetch_abstract(pubmed, str(record.get("pmid") or ""))
-                )
-                text = compose_post(record, summary, topic_tags)
-                if len(text) > LINKEDIN_LIMIT:
-                    raise RuntimeError(f"Post is {len(text)} characters, over LinkedIn's {LINKEDIN_LIMIT}.")
+                written = write_summary(claude, record, fetch_abstract(pubmed, str(record.get("pmid") or "")))
             except Exception as error:
-                failed += 1
-                print(f"::warning::Could not write a post for {record_id} ({title[:60]}): {error}")
+                failed += len(todo)
+                print(f"::warning::Could not write posts for {record_id} ({title[:60]}): {error}")
                 continue
 
-            slot = next_slot(earliest)
-            when = slot.astimezone(SYDNEY).strftime("%a %d %b %Y %H:%M")
-            if args.dry_run:
-                print(f"--- would post {when} (Sydney) ---\n{text}\n")
-                earliest = slot + POST_GAP
-                continue
+            for channel_id in todo:
+                service = services[channel_id]
+                text = post_text(service, record, written)
+                if post_length(service, text) > TEXT_LIMITS[service]:
+                    failed += 1
+                    print(f"::warning::The {service} post for {record_id} is over {TEXT_LIMITS[service]} characters.")
+                    continue
+                slot = next_slot(earliest[channel_id])
+                when = slot.astimezone(SYDNEY).strftime("%a %d %b %Y %H:%M")
+                if args.dry_run:
+                    print(f"--- {service}: would post {when} (Sydney) ---\n{text}\n")
+                    earliest[channel_id] = slot + POST_GAP
+                    continue
 
-            # Claim the record before calling Buffer: a crash between the two leaves it marked
-            # 'scheduling' (check it by hand) rather than posting it twice next week.
-            log.record(record_id, "scheduling", post_text=text, due_at=slot.isoformat())
-            post_id, error = buffer.schedule(text, slot, paper_url(record), title)
-            if post_id is None:
-                if error.startswith("LimitReachedError"):
-                    # Buffer's queue is full: release the claim so next week's run tries again.
-                    log.release(record_id)
-                    print(f"::warning::Buffer queue is full; remaining posts wait for the next run. ({error})")
-                    break
-                log.record(record_id, "failed", note=error)
-                failed += 1
-                print(f"::warning::Buffer refused the post for {record_id}: {error}")
-                continue
-            log.record(record_id, "scheduled", buffer_post_id=post_id)
-            scheduled += 1
-            earliest = slot + POST_GAP
-            print(f"Scheduled for {when} (Sydney): {title}")
+                # Claim the record before calling Buffer: a crash between the two leaves it marked
+                # 'scheduling' (check it by hand) rather than posting it twice next week.
+                log.record(record_id, channel_id, "scheduling", post_text=text, due_at=slot.isoformat())
+                post_id, error = buffer.schedule(channel_id, service, text, slot, paper_url(record), title)
+                if post_id is None:
+                    if error.startswith("LimitReachedError"):
+                        # This channel's queue is full: release the claim so next week's run tries again.
+                        log.release(record_id, channel_id)
+                        full.add(channel_id)
+                        print(f"::warning::Buffer {service} queue is full; its remaining posts wait for the next run.")
+                        continue
+                    log.record(record_id, channel_id, "failed", note=error)
+                    failed += 1
+                    print(f"::warning::Buffer refused the {service} post for {record_id}: {error}")
+                    continue
+                log.record(record_id, channel_id, "scheduled", buffer_post_id=post_id)
+                scheduled += 1
+                earliest[channel_id] = slot + POST_GAP
+                print(f"Scheduled on {service} for {when} (Sydney): {title}")
 
         if not args.dry_run:
             print(f"Social posts: {scheduled} scheduled, {failed} failed.")
