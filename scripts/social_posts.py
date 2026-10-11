@@ -311,21 +311,29 @@ class BufferClient:
             metadata["linkedin"] = link
         elif service == "facebook":
             metadata["facebook"] = {"type": "post", **link}
-        data = self.query(
-            "mutation($input: CreatePostInput!) { createPost(input: $input) {"
-            " ... on PostActionSuccess { post { id dueAt } }"
-            " ... on MutationError { __typename message } } }",
-            {"input": {
-                "text": text,
-                "channelId": channel_id,
-                "schedulingType": "automatic",
-                "mode": "customScheduled",
-                "dueAt": due_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
-                "aiAssisted": True,
-                "metadata": metadata,
-            }},
-        )
-        result = data["createPost"]
+
+        def create(scheduling_type: str) -> dict[str, object]:
+            data = self.query(
+                "mutation($input: CreatePostInput!) { createPost(input: $input) {"
+                " ... on PostActionSuccess { post { id dueAt } }"
+                " ... on MutationError { __typename message } } }",
+                {"input": {
+                    "text": text,
+                    "channelId": channel_id,
+                    "schedulingType": scheduling_type,
+                    "mode": "customScheduled",
+                    "dueAt": due_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
+                    "aiAssisted": True,
+                    "metadata": metadata,
+                }},
+            )
+            return data["createPost"]
+
+        result = create("automatic")
+        if "post" not in result and "notification scheduling" in str(result.get("message", "")):
+            # Facebook Group channels cannot be posted to through the API. Buffer sends a reminder at the
+            # due time instead and the post is published by hand from the Buffer or Facebook app.
+            result = create("notification")
         if "post" in result:
             return result["post"]["id"], ""
         return None, f"{result.get('__typename', 'MutationError')}: {result.get('message', '')}"
