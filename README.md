@@ -151,14 +151,42 @@ Visitors have read-only access. An approved editor selects **Editor sign in**, e
 
 For a new PubMed publication, enter its PMID and select **Populate from PubMed** before saving. Enter one project or programme per line. These assignments are stored with a manual source flag and retained by future weekly updates.
 
+### Deleting publications
+
+To delete a record, open it with **Edit record & associations**, select **Delete**, and confirm. It is removed from the database at once.
+
+**One-time setup.** Run the updated `supabase/schema.sql` in the Supabase SQL editor. It is safe to re-run. Until you do, the website refuses to delete: a deleted PubMed record would be added back by the next weekly update.
+
+- **Deleted records stay deleted.** A PubMed record still matches the weekly PubMed search, so deleting it adds its PMID to `public.deleted_publications`, and the weekly update skips those PMIDs. A record deleted while the update is running is not added back either.
+- **To restore a PubMed record**, use **Add publication** with its PMID. Adding a record with that PMID removes it from `deleted_publications`.
+- **To restore any record exactly as it was**, including a manual record, its project and programme assignments and its citation count, find it and restore it in the SQL editor:
+
+```sql
+-- Recently deleted records
+select publication_id, changed_at, old_record ->> 'title' as title
+from public.publication_history where operation = 'DELETE' order by changed_at desc limit 20;
+
+-- Restore one, replacing PUBLICATION_ID
+insert into public.publications
+select * from jsonb_populate_record(
+  null::public.publications,
+  (select old_record from public.publication_history
+   where publication_id = 'PUBLICATION_ID' and operation = 'DELETE'
+   order by changed_at desc limit 1)
+);
+```
+
+- **Social media.** Deleting a record does not cancel a post already scheduled in Buffer. The confirmation warns about this for recently added papers; delete the post in Buffer's queue. The `social_posts` table keeps its rows when a publication is deleted, so a restored paper is not announced again.
+
 ## Backups and audit history
 
 - **Download CSV backup** exports the currently loaded database from the browser.
 - The weekly workflow commits an updated `publications.csv` to GitHub.
 - `public.publication_history` stores each insert, update, and delete with its timestamp, editor ID, and before/after records.
+- `public.deleted_publications` lists the PMIDs of deleted PubMed records, with who deleted each one and when.
 
 ## Local testing
 
 Until `config.js` contains working Supabase values, the page automatically falls back to the committed CSV in read-only mode. Serve the repository with a local web server rather than opening `index.html` using a `file:` URL.
 
-Run the citation tests with `python -m unittest discover -s scripts`. They use saved sample responses and make no network requests.
+Run the tests with `python -m unittest discover -s scripts`. They use saved sample responses and make no network requests.

@@ -198,13 +198,66 @@ on public.publication_history for select
 to authenticated
 using ((select public.is_publication_editor()));
 
+-- PubMed records an editor has deleted. They still match the weekly PubMed search, so the weekly
+-- update (scripts/sync_database.py) would add them back; it skips the PMIDs listed here instead.
+-- A row is written when a publication with a PMID is deleted, and removed when a publication with
+-- that PMID is added again, so adding a paper back is all it takes to restore it. The deleted
+-- record itself is kept in publication_history.
+create table if not exists public.deleted_publications (
+  pmid text primary key,
+  title text not null default '',
+  deleted_at timestamptz not null default now(),
+  deleted_by uuid references auth.users(id) on delete set null
+);
+
+create or replace function private.track_deleted_publications()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_op = 'DELETE' then
+    if coalesce(old.pmid, '') <> '' then
+      insert into public.deleted_publications (pmid, title, deleted_by)
+      values (old.pmid, old.title, (select auth.uid()))
+      on conflict (pmid) do update
+        set title = excluded.title, deleted_at = now(), deleted_by = excluded.deleted_by;
+    end if;
+    return old;
+  end if;
+  if coalesce(new.pmid, '') <> '' then
+    delete from public.deleted_publications where pmid = new.pmid;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists publications_track_deletions on public.publications;
+create trigger publications_track_deletions
+after insert or update of pmid or delete on public.publications
+for each row execute function private.track_deleted_publications();
+
+alter table public.deleted_publications enable row level security;
+revoke all on public.deleted_publications from anon, authenticated;
+grant select on public.deleted_publications to authenticated;
+grant select, insert, update, delete on public.deleted_publications to service_role;
+revoke all on function private.track_deleted_publications() from public;
+
+drop policy if exists "Editors can view deleted publications" on public.deleted_publications;
+create policy "Editors can view deleted publications"
+on public.deleted_publications for select
+to authenticated
+using ((select public.is_publication_editor()));
+
 -- Social media posts scheduled through Buffer (scripts/social_posts.py). One row per publication and
 -- Buffer channel handled, so nothing is announced twice. An empty channel_id covers every channel
--- (skipped papers, and papers posted before there was more than one channel). Only the service key
--- used by the GitHub Action can read or write it: RLS is on and there are no policies for anon or
--- authenticated users.
+-- (skipped papers, and papers posted before there was more than one channel). Rows stay when a
+-- publication is deleted, so a paper that is deleted and later added back is not announced again.
+-- Only the service key used by the GitHub Action can read or write it: RLS is on and there are no
+-- policies for anon or authenticated users.
 create table if not exists public.social_posts (
-  publication_id text not null references public.publications(id) on delete cascade,
+  publication_id text not null,
   channel_id text not null default '',
   status text not null check (status in ('scheduling', 'scheduled', 'skipped', 'failed')),
   buffer_post_id text,
@@ -223,6 +276,20 @@ begin
     alter table public.social_posts drop constraint social_posts_pkey;
     alter table public.social_posts add primary key (publication_id, channel_id);
   end if;
+end;
+$do$;
+-- Databases created before rows were kept: drop the foreign key that deleted them with the publication.
+do $do$
+declare
+  foreign_key text;
+begin
+  for foreign_key in
+    select conname from pg_constraint
+    where conrelid = 'public.social_posts'::regclass and contype = 'f'
+      and confrelid = 'public.publications'::regclass
+  loop
+    execute format('alter table public.social_posts drop constraint %I', foreign_key);
+  end loop;
 end;
 $do$;
 alter table public.social_posts enable row level security;

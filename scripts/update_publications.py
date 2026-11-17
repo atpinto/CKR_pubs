@@ -14,6 +14,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from collections.abc import Collection
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -411,7 +412,9 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> 
     temporary.replace(path)
 
 
-def update(csv_path: Path) -> dict[str, int]:
+def update(csv_path: Path, deleted_pmids: Collection[str] = ()) -> dict[str, int]:
+    """Refresh the CSV from PubMed. Search results whose PMID is in deleted_pmids are not added:
+    an editor deleted them. Records already in the CSV are refreshed as usual."""
     fieldnames, existing_rows, existing_records = read_csv(csv_path)
     by_pmid = {str(record["pmid"]): record for record in existing_records if record["pmid"]}
     raw_by_id = {row["id"]: row for row in existing_rows}
@@ -419,7 +422,8 @@ def update(csv_path: Path) -> dict[str, int]:
 
     client = PubMedClient()
     search_ids, source_count = client.search_ids()
-    wanted = list(dict.fromkeys(search_ids + list(by_pmid)))
+    skipped = {pmid for pmid in search_ids if pmid in deleted_pmids and pmid not in by_pmid}
+    wanted = list(dict.fromkeys([pmid for pmid in search_ids if pmid not in skipped] + list(by_pmid)))
     refreshed: dict[str, dict[str, object]] = {}
     added = 0
     changed = 0
@@ -466,6 +470,7 @@ def update(csv_path: Path) -> dict[str, int]:
         "added": added,
         "refreshed": changed,
         "affiliation_review": review,
+        "deleted_skipped": len(skipped),
     }
 
 

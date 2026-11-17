@@ -110,6 +110,35 @@ class SupabaseClient:
                 break
         return records
 
+    def fetch_deleted_pmids(self) -> set[str]:
+        """PMIDs of records an editor deleted, which must not be added back."""
+        pmids: set[str] = set()
+        try:
+            for offset in range(0, 1_000_000, PAGE_SIZE):
+                query = urllib.parse.urlencode({
+                    "select": "pmid",
+                    "order": "pmid.asc",
+                    "limit": str(PAGE_SIZE),
+                    "offset": str(offset),
+                })
+                page = self.request("GET", f"/rest/v1/deleted_publications?{query}")
+                if not isinstance(page, list):
+                    raise RuntimeError("Supabase returned an invalid deleted_publications response.")
+                pmids.update(str(row["pmid"]) for row in page if row.get("pmid"))
+                if len(page) < PAGE_SIZE:
+                    break
+        except RuntimeError as error:
+            message = str(error).lower()
+            if "deleted_publications" in message and ("does not exist" in message or "could not find" in message):
+                # Databases set up before deleting was possible have no such table, and so no deletions.
+                print(
+                    "::warning::The database has no deleted_publications table. Records deleted on the "
+                    "website would be added back. Run supabase/schema.sql in the Supabase SQL editor."
+                )
+                return set()
+            raise
+        return pmids
+
     def upsert_publications(self, records: list[dict[str, object]]) -> None:
         for start in range(0, len(records), 100):
             batch = records[start:start + 100]
@@ -208,6 +237,22 @@ def preserve_latest_manual_associations(
                 record[kind] = current.get(kind) or []
                 record[evidence] = {}
                 record[source] = "manual"
+
+
+def drop_deleted_during_run(
+    refreshed: list[dict[str, object]],
+    initial: list[dict[str, object]],
+    latest: list[dict[str, object]],
+) -> tuple[list[dict[str, object]], set[str]]:
+    """Leave out records that were in the database when this run started but are gone now: an editor
+    deleted them while PubMed was being queried, and upserting them would add them back."""
+    gone = {str(record.get("id")) for record in initial} - {str(record.get("id")) for record in latest}
+    return [record for record in refreshed if str(record["id"]) not in gone], gone
+
+
+def remove_csv_records(path: Path, record_ids: set[str]) -> None:
+    fieldnames, rows, _ = read_csv(path)
+    write_csv(path, fieldnames, [row for row in rows if row.get("id") not in record_ids])
 
 
 def scopus_limits(args: argparse.Namespace) -> tuple[int, float]:
@@ -358,23 +403,34 @@ def main() -> int:
             records = read_database_import(args.csv)
             if not records:
                 raise RuntimeError("The CSV contains no publication records.")
-            client.upsert_publications(records)
-            print(f"Seeded {len(records)} publication records into Supabase.")
+            deleted_pmids = client.fetch_deleted_pmids()
+            kept = [record for record in records if str(record.get("pmid") or "") not in deleted_pmids]
+            client.upsert_publications(kept)
+            print(f"Seeded {len(kept)} publication records into Supabase.")
+            if len(kept) < len(records):
+                print(f"Skipped {len(records) - len(kept)} records that an editor deleted.")
             return 0
 
         current = client.fetch_publications()
         if not current:
             raise RuntimeError("The database is empty. Run this command once with --seed first.")
+        deleted_pmids = client.fetch_deleted_pmids()
         write_database_export(args.csv, current, client.export_columns())
-        summary = update(args.csv)
+        summary = update(args.csv, deleted_pmids)
         refreshed = read_database_import(args.csv)
-        preserve_latest_manual_associations(refreshed, client.fetch_publications())
+        latest = client.fetch_publications()
+        refreshed, gone = drop_deleted_during_run(refreshed, current, latest)
+        if gone:
+            remove_csv_records(args.csv, gone)
+            print(f"Left out {len(gone)} records that an editor deleted during this run.")
+        preserve_latest_manual_associations(refreshed, latest)
         client.upsert_publications(refreshed)
         print(
             "Database update complete: "
-            f"{summary['records']} records, {summary['added']} added, "
+            f"{len(refreshed)} records, {summary['added']} added, "
             f"{summary['refreshed']} refreshed, "
-            f"{summary['affiliation_review']} affiliations to review."
+            f"{summary['affiliation_review']} affiliations to review, "
+            f"{summary['deleted_skipped']} deleted by an editor and not added back."
         )
         run_scopus_stage(client, args)
         return 0
