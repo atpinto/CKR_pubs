@@ -110,6 +110,31 @@ class SupabaseClient:
                 break
         return records
 
+    def fetch_excluded_pmids(self) -> set[str]:
+        """PMIDs editors removed. Empty, with a warning, if the database predates the exclusion table."""
+        excluded: set[str] = set()
+        for offset in range(0, 1_000_000, PAGE_SIZE):
+            query = urllib.parse.urlencode({
+                "select": "pmid", "order": "pmid.asc", "limit": str(PAGE_SIZE), "offset": str(offset),
+            })
+            try:
+                page = self.request("GET", f"/rest/v1/excluded_publications?{query}")
+            except RuntimeError as error:
+                if "excluded_publications" in str(error):
+                    print(
+                        "Warning: excluded_publications table not found; run supabase/schema.sql "
+                        "so removed publications stay removed.",
+                        file=sys.stderr,
+                    )
+                    return set()
+                raise
+            if not isinstance(page, list):
+                raise RuntimeError("Supabase returned an invalid exclusion response.")
+            excluded.update(str(row["pmid"]) for row in page if row.get("pmid"))
+            if len(page) < PAGE_SIZE:
+                break
+        return excluded
+
     def upsert_publications(self, records: list[dict[str, object]]) -> None:
         for start in range(0, len(records), 100):
             batch = records[start:start + 100]
@@ -208,6 +233,27 @@ def preserve_latest_manual_associations(
                 record[kind] = current.get(kind) or []
                 record[evidence] = {}
                 record[source] = "manual"
+
+
+def drop_removed_during_run(
+    refreshed: list[dict[str, object]],
+    started: list[dict[str, object]],
+    latest: list[dict[str, object]],
+    excluded_pmids: set[str],
+) -> list[dict[str, object]]:
+    """Leave out records an editor removed while this run was fetching PubMed, so the upsert
+    does not bring them back."""
+    started_ids = {str(record.get("id")) for record in started}
+    latest_ids = {str(record.get("id")) for record in latest}
+    kept = []
+    for record in refreshed:
+        record_id = str(record["id"])
+        if record_id in started_ids and record_id not in latest_ids:
+            continue
+        if record_id not in latest_ids and str(record.get("pmid") or "") in excluded_pmids:
+            continue
+        kept.append(record)
+    return kept
 
 
 def scopus_limits(args: argparse.Namespace) -> tuple[int, float]:
@@ -365,16 +411,23 @@ def main() -> int:
         current = client.fetch_publications()
         if not current:
             raise RuntimeError("The database is empty. Run this command once with --seed first.")
+        excluded = client.fetch_excluded_pmids()
         write_database_export(args.csv, current, client.export_columns())
-        summary = update(args.csv)
+        summary = update(args.csv, excluded)
         refreshed = read_database_import(args.csv)
-        preserve_latest_manual_associations(refreshed, client.fetch_publications())
+        latest = client.fetch_publications()
+        preserve_latest_manual_associations(refreshed, latest)
+        refreshed = drop_removed_during_run(refreshed, current, latest, client.fetch_excluded_pmids())
         client.upsert_publications(refreshed)
+        if len(refreshed) != summary["records"]:
+            # Keep the CSV backup in step with what the database now holds.
+            write_database_export(args.csv, client.fetch_publications(), client.export_columns())
         print(
             "Database update complete: "
             f"{summary['records']} records, {summary['added']} added, "
             f"{summary['refreshed']} refreshed, "
-            f"{summary['affiliation_review']} affiliations to review."
+            f"{summary['affiliation_review']} affiliations to review, "
+            f"{summary['excluded']} removed by editors skipped."
         )
         run_scopus_stage(client, args)
         return 0

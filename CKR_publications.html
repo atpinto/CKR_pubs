@@ -141,6 +141,8 @@ dialog::backdrop{background:#0b2221b3}
 .pmid-row{display:grid;grid-template-columns:1fr auto;align-items:end;gap:9px}
 .form-help{display:block;font-size:12px;font-weight:400;color:var(--muted);margin:5px 0 0}
 .fetch-status{min-height:20px;font-size:13px;color:var(--accent);margin:8px 0 0}
+button.danger{color:var(--error);border-color:var(--error);margin-right:auto}
+button.danger:hover{background:var(--error);border-color:var(--error);color:var(--surface)}
 .login-error{min-height:22px;color:var(--error);font-size:13px;margin:8px 0 0}
 .password-note{font-size:13px;color:var(--muted);margin-top:12px}
 .dialog-actions{position:sticky;bottom:0;display:flex;justify-content:flex-end;gap:9px;padding:16px 24px;background:var(--surface);border-top:1px solid var(--line)}
@@ -212,9 +214,9 @@ dialog::backdrop{background:#0b2221b3}
 <div class="update-panel"><p id="update-status" role="status" aria-live="polite">Connecting to the publication database…</p><div class="update-actions"><button id="reload-data" type="button">Reload database</button><button id="save-csv" type="button">Download CSV backup</button><button id="add-publication" type="button" class="primary" disabled>Add publication</button></div></div>
 <div class="results-bar"><div id="result-count" class="results-count" role="status" aria-live="polite"></div><div class="actions"><select id="sort" aria-label="Sort publications"><option value="new">Newest first</option><option value="old">Oldest first</option><option value="cited">Most cited (Scopus)</option><option value="title">Title A-Z</option></select><button id="print" type="button">Print list</button><button id="export" class="primary" type="button">Export to EndNote</button></div></div><p class="print-label">CKR affiliation-based collection · <span id="print-date">14 September 2026</span>. Associations are unconfirmed suggestions.</p><div id="list"><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div><div class="skeleton" aria-hidden="true"><span></span><span></span><span></span></div></div><div class="pagination"><span id="page-info"></span><div><button type="button" id="prev">Previous</button><button type="button" id="next">Next</button></div></div></section>
 </div>
-<details class="method"><summary>About this collection &amp; keeping it up to date</summary><div class="method-body"><p><strong>Live data.</strong> The collection contains <span id="coverage-count">0</span> records loaded from a Supabase PostgreSQL database. The committed <code>publications.csv</code> remains a portable backup.</p><p><strong>Automatic updates.</strong> The GitHub Actions workflow runs every Monday at 7:00 am in the Australia/Sydney timezone. It queries PubMed, refreshes the database and CSV backup, and preserves manually curated project/programme assignments.</p><p><strong>Citation counts.</strong> “Cited by” numbers come from Scopus (matched by DOI or PubMed ID) and link to the paper’s record on Scopus. They are looked up during the weekly run: new records first, then the records whose count is oldest, so older counts can be a little out of date; hover over a count to see when it was checked. A record shows no count until it has been checked and found in Scopus, and a count is never replaced by a failed lookup.</p><p><strong>Manual records and associations.</strong> Approved editors sign in with email and password. Use <strong>Add publication</strong> and enter a PMID to populate its citation from PubMed, or fill the fields yourself. Every record then has an <strong>Edit record &amp; associations</strong> button. Enter one project or programme per line. Clicking <strong>Save record</strong> writes the change directly to the database and records it in the audit history.</p><p><strong>CSV backup.</strong> The associations are text in the <code>projects</code> and <code>programmes</code> columns, separated by <code> | </code>. Multi-value citation fields use JSON arrays so commas and semicolons round-trip safely.</p><p><strong>Coverage.</strong> The weekly updater uses the Centre/Center for Kidney Research affiliation query and retains only matching Sydney, Westmead, New South Wales or NSW affiliations. Existing records that can no longer be verified are retained with a review label. Manually added non-PubMed records are never removed.</p><p><strong>EndNote.</strong> “Export to EndNote” downloads the currently filtered records as a RIS file. In <a href="https://my.endnote.com" target="_blank" rel="noopener noreferrer">EndNote Online</a>, import it using RefMan RIS. Project and programme assignments are included as searchable keywords.</p><p>Each PubMed record links to its source. A <a id="alert-link" target="_blank" rel="noopener noreferrer">PubMed search alert</a> is also available.</p></div></details>
+<details class="method"><summary>About this collection &amp; keeping it up to date</summary><div class="method-body"><p><strong>Live data.</strong> The collection contains <span id="coverage-count">0</span> records loaded from a Supabase PostgreSQL database. The committed <code>publications.csv</code> remains a portable backup.</p><p><strong>Automatic updates.</strong> The GitHub Actions workflow runs every Monday at 7:00 am in the Australia/Sydney timezone. It queries PubMed, refreshes the database and CSV backup, and preserves manually curated project/programme assignments.</p><p><strong>Citation counts.</strong> “Cited by” numbers come from Scopus (matched by DOI or PubMed ID) and link to the paper’s record on Scopus. They are looked up during the weekly run: new records first, then the records whose count is oldest, so older counts can be a little out of date; hover over a count to see when it was checked. A record shows no count until it has been checked and found in Scopus, and a count is never replaced by a failed lookup.</p><p><strong>Manual records and associations.</strong> Approved editors sign in with email and password. Use <strong>Add publication</strong> and enter a PMID to populate its citation from PubMed, or fill the fields yourself. Every record then has an <strong>Edit record &amp; associations</strong> button. <strong>Remove publication</strong> in that dialog deletes the record; removed PubMed records are not added back by the weekly update unless an editor adds the same PMID again. Enter one project or programme per line. Clicking <strong>Save record</strong> writes the change directly to the database and records it in the audit history.</p><p><strong>CSV backup.</strong> The associations are text in the <code>projects</code> and <code>programmes</code> columns, separated by <code> | </code>. Multi-value citation fields use JSON arrays so commas and semicolons round-trip safely.</p><p><strong>Coverage.</strong> The weekly updater uses the Centre/Center for Kidney Research affiliation query and retains only matching Sydney, Westmead, New South Wales or NSW affiliations. Existing records that can no longer be verified are retained with a review label. Manually added non-PubMed records are never removed.</p><p><strong>EndNote.</strong> “Export to EndNote” downloads the currently filtered records as a RIS file. In <a href="https://my.endnote.com" target="_blank" rel="noopener noreferrer">EndNote Online</a>, import it using RefMan RIS. Project and programme assignments are included as searchable keywords.</p><p>Each PubMed record links to its source. A <a id="alert-link" target="_blank" rel="noopener noreferrer">PubMed search alert</a> is also available.</p></div></details>
 <dialog id="login-dialog" aria-labelledby="login-title"><form id="login-form"><div class="dialog-head"><h2 id="login-title">Editor sign in</h2><button id="close-login" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><label class="wide" for="login-email">Email<input id="login-email" type="email" autocomplete="username" required></label><label class="wide" for="login-password">Password<input id="login-password" type="password" autocomplete="current-password" required></label></div><p id="login-error" class="login-error" role="alert"></p><p class="password-note">Only accounts approved as publication editors can save changes.</p></div><div class="dialog-actions"><button id="cancel-login" type="button">Cancel</button><button id="submit-login" class="primary" type="submit">Sign in</button></div></form></dialog>
-<dialog id="editor" aria-labelledby="editor-title"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Add publication</h2><button id="close-editor" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><div class="wide"><div class="pmid-row"><label for="edit-pmid">PubMed ID (optional)<input id="edit-pmid" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 42715707"></label><button id="fetch-pmid" type="button">Populate from PubMed</button></div><p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p></div><label class="wide" for="edit-title">Title *<input id="edit-title" required></label><label for="edit-year">Year *<input id="edit-year" required inputmode="numeric" pattern="[0-9]{4}"></label><label for="edit-journal">Journal<input id="edit-journal"></label><label for="edit-abbreviation">Journal abbreviation<input id="edit-abbreviation"></label><label for="edit-doi">DOI<input id="edit-doi"></label><label class="wide" for="edit-authors">Authors<textarea id="edit-authors" placeholder="One author per line"></textarea></label><label for="edit-volume">Volume<input id="edit-volume"></label><label for="edit-issue">Issue<input id="edit-issue"></label><label for="edit-start-page">Start page or article number<input id="edit-start-page"></label><label for="edit-end-page">End page<input id="edit-end-page"></label><label class="wide" for="edit-affiliations">Affiliations<textarea id="edit-affiliations" placeholder="One affiliation per line"></textarea></label><label class="wide" for="edit-types">Publication types<textarea id="edit-types" placeholder="One type per line"></textarea></label><label for="edit-projects">Projects<textarea id="edit-projects" placeholder="One project per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label><label for="edit-programmes">Programmes<textarea id="edit-programmes" placeholder="One programme per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label></div></div><div class="dialog-actions"><button id="cancel-editor" type="button">Cancel</button><button id="save-record" class="primary" type="submit">Save record</button></div></form></dialog>
+<dialog id="editor" aria-labelledby="editor-title"><form id="editor-form"><div class="dialog-head"><h2 id="editor-title">Add publication</h2><button id="close-editor" class="icon-button" type="button" aria-label="Close">×</button></div><div class="editor-body"><div class="form-grid"><div class="wide"><div class="pmid-row"><label for="edit-pmid">PubMed ID (optional)<input id="edit-pmid" inputmode="numeric" pattern="[0-9]*" placeholder="e.g. 42715707"></label><button id="fetch-pmid" type="button">Populate from PubMed</button></div><p id="fetch-status" class="fetch-status" role="status" aria-live="polite"></p></div><label class="wide" for="edit-title">Title *<input id="edit-title" required></label><label for="edit-year">Year *<input id="edit-year" required inputmode="numeric" pattern="[0-9]{4}"></label><label for="edit-journal">Journal<input id="edit-journal"></label><label for="edit-abbreviation">Journal abbreviation<input id="edit-abbreviation"></label><label for="edit-doi">DOI<input id="edit-doi"></label><label class="wide" for="edit-authors">Authors<textarea id="edit-authors" placeholder="One author per line"></textarea></label><label for="edit-volume">Volume<input id="edit-volume"></label><label for="edit-issue">Issue<input id="edit-issue"></label><label for="edit-start-page">Start page or article number<input id="edit-start-page"></label><label for="edit-end-page">End page<input id="edit-end-page"></label><label class="wide" for="edit-affiliations">Affiliations<textarea id="edit-affiliations" placeholder="One affiliation per line"></textarea></label><label class="wide" for="edit-types">Publication types<textarea id="edit-types" placeholder="One type per line"></textarea></label><label for="edit-projects">Projects<textarea id="edit-projects" placeholder="One project per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label><label for="edit-programmes">Programmes<textarea id="edit-programmes" placeholder="One programme per line"></textarea><span class="form-help">Manual entries replace automatic suggestions for this record.</span></label></div></div><div class="dialog-actions"><button id="remove-record" class="danger" type="button" hidden>Remove publication</button><button id="cancel-editor" type="button">Cancel</button><button id="save-record" class="primary" type="submit">Save record</button></div></form></dialog>
 <footer class="foot"><span>Centre for Kidney Research · Publication register</span><span>Public metadata from PubMed and Scopus. Last checked <span id="footer-date">14 September 2026</span></span></footer>
 <noscript><p>This searchable collection requires JavaScript. Enable it in your browser to view the publication records. No internet connection is needed to search the collection.</p></noscript>
 </main>
@@ -637,6 +639,14 @@ async function fetchDatabaseRecords() {
       if (!missingColumn || index === COLUMN_TIERS.length - 1) throw error;
     }
   }
+}
+
+async function removeDatabaseRecord(id) {
+  await databaseRequest('/rest/v1/rpc/remove_publication', {
+    method: 'POST',
+    authenticated: true,
+    body: { target_id: id, removal_reason: '' }
+  });
 }
 
 async function saveDatabaseRecord(record) {
@@ -1118,6 +1128,7 @@ function openEditor(record = null) {
   $('editor-form').reset();
   fillEditor(record ? structuredClone(record) : emptyRecord());
   $('fetch-status').textContent = '';
+  $('remove-record').hidden = !record;
   $('editor').showModal();
 }
 
@@ -1199,6 +1210,31 @@ async function saveEditor(event) {
   } catch (error) {
     $('fetch-status').textContent = `Could not save: ${error.message}`;
   } finally {
+    $('save-record').disabled = false;
+  }
+}
+
+async function removeEditorRecord() {
+  const existing = records.find(record => record.id === editingId);
+  if (!existing) return;
+  const keepOut = existing.pmid
+    ? ' The weekly PubMed update will not add it back. To restore it later, use Add publication with the same PMID.'
+    : '';
+  if (!confirm(`Remove “${existing.title}” from the collection?${keepOut}`)) return;
+  $('remove-record').disabled = true;
+  $('save-record').disabled = true;
+  $('fetch-status').textContent = 'Removing from the database…';
+  try {
+    await removeDatabaseRecord(existing.id);
+    records.splice(records.indexOf(existing), 1);
+    $('editor').close();
+    rebuildCollection();
+    status(`Removed “${existing.title}”. The removed record is kept in the audit history.`);
+  } catch (error) {
+    const hint = /remove_publication/.test(error.message) ? ' (the database needs the latest supabase/schema.sql)' : '';
+    $('fetch-status').textContent = `Could not remove: ${error.message}${hint}`;
+  } finally {
+    $('remove-record').disabled = false;
     $('save-record').disabled = false;
   }
 }
@@ -1286,6 +1322,7 @@ $('editor-form').addEventListener('submit', saveEditor);
 $('fetch-pmid').addEventListener('click', fetchEditorPMID);
 $('close-editor').addEventListener('click', () => $('editor').close());
 $('cancel-editor').addEventListener('click', () => $('editor').close());
+$('remove-record').addEventListener('click', removeEditorRecord);
 
 initialize();
 

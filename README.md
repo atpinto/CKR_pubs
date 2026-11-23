@@ -37,6 +37,8 @@ on conflict (user_id) do update set label = excluded.label;
 
 The security policies allow everyone to read publications. Only users listed in `private.publication_editors` may add, update, or delete records. Every database change is written to `public.publication_history`.
 
+Editors remove a record with **Remove publication** in its edit dialog. A removed PubMed record's PMID is stored in `public.excluded_publications`, and the weekly update skips it so the paper is not added back. Adding the same PMID again with **Add publication** lifts the exclusion. `schema.sql` is safe to re-run on an existing database to pick up new tables and functions.
+
 ## 2. Configure the website
 
 Open the Supabase project’s **Connect** dialog and copy its project URL and publishable key into `config.js`:

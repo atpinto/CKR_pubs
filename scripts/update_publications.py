@@ -411,7 +411,8 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, str]]) -> 
     temporary.replace(path)
 
 
-def update(csv_path: Path) -> dict[str, int]:
+def update(csv_path: Path, excluded_pmids: frozenset[str] | set[str] = frozenset()) -> dict[str, int]:
+    """Refresh the CSV from PubMed. PMIDs in excluded_pmids were removed by an editor and are not re-added."""
     fieldnames, existing_rows, existing_records = read_csv(csv_path)
     by_pmid = {str(record["pmid"]): record for record in existing_records if record["pmid"]}
     raw_by_id = {row["id"]: row for row in existing_rows}
@@ -419,6 +420,8 @@ def update(csv_path: Path) -> dict[str, int]:
 
     client = PubMedClient()
     search_ids, source_count = client.search_ids()
+    skipped = sum(1 for pmid in search_ids if pmid in excluded_pmids and pmid not in by_pmid)
+    search_ids = [pmid for pmid in search_ids if pmid not in excluded_pmids or pmid in by_pmid]
     wanted = list(dict.fromkeys(search_ids + list(by_pmid)))
     refreshed: dict[str, dict[str, object]] = {}
     added = 0
@@ -466,6 +469,7 @@ def update(csv_path: Path) -> dict[str, int]:
         "added": added,
         "refreshed": changed,
         "affiliation_review": review,
+        "excluded": skipped,
     }
 
 

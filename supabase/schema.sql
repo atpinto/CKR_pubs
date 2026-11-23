@@ -198,6 +198,79 @@ on public.publication_history for select
 to authenticated
 using ((select public.is_publication_editor()));
 
+-- Publications an editor removed. The weekly PubMed update skips these PMIDs so a removed paper is
+-- not added back. Adding the same PMID again by hand (Add publication) lifts the exclusion.
+create table if not exists public.excluded_publications (
+  pmid text primary key check (pmid ~ '^[0-9]+$'),
+  title text not null default '',
+  reason text not null default '',
+  excluded_at timestamptz not null default now(),
+  excluded_by uuid references auth.users(id) on delete set null
+);
+alter table public.excluded_publications enable row level security;
+revoke all on public.excluded_publications from anon, authenticated;
+grant select, insert, update, delete on public.excluded_publications to authenticated;
+grant select, insert, update, delete on public.excluded_publications to service_role;
+
+drop policy if exists "Editors manage excluded publications" on public.excluded_publications;
+create policy "Editors manage excluded publications"
+on public.excluded_publications for all
+to authenticated
+using ((select public.is_publication_editor()))
+with check ((select public.is_publication_editor()));
+
+-- Removes one record and, when it has a PMID, excludes that PMID from future PubMed updates, in a
+-- single transaction. The removed record is kept in publication_history.
+create or replace function public.remove_publication(target_id text, removal_reason text default '')
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+declare
+  removed public.publications;
+begin
+  if not (select public.is_publication_editor()) then
+    raise exception 'Only approved publication editors can remove records.' using errcode = '42501';
+  end if;
+  delete from public.publications where id = target_id returning * into removed;
+  if not found then
+    raise exception 'Publication % was not found; it may already have been removed.', target_id
+      using errcode = 'P0002';
+  end if;
+  if coalesce(removed.pmid, '') <> '' then
+    insert into public.excluded_publications (pmid, title, reason, excluded_by)
+    values (removed.pmid, removed.title, coalesce(removal_reason, ''), (select auth.uid()))
+    on conflict (pmid) do update
+      set title = excluded.title, reason = excluded.reason,
+          excluded_at = now(), excluded_by = excluded.excluded_by;
+  end if;
+end;
+$$;
+revoke all on function public.remove_publication(text, text) from public;
+grant execute on function public.remove_publication(text, text) to authenticated;
+
+-- Fires only for real inserts (not the update path of an upsert).
+create or replace function private.clear_publication_exclusion()
+returns trigger
+language plpgsql
+security invoker
+set search_path = ''
+as $$
+begin
+  if coalesce(new.pmid, '') <> '' then
+    delete from public.excluded_publications where pmid = new.pmid;
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.clear_publication_exclusion() from public;
+
+drop trigger if exists publications_clear_exclusion on public.publications;
+create trigger publications_clear_exclusion
+after insert on public.publications
+for each row execute function private.clear_publication_exclusion();
+
 -- Social media posts scheduled through Buffer (scripts/social_posts.py). One row per publication and
 -- Buffer channel handled, so nothing is announced twice. An empty channel_id covers every channel
 -- (skipped papers, and papers posted before there was more than one channel). Only the service key
