@@ -1,0 +1,36 @@
+name: Keep Supabase awake
+
+# Supabase pauses free-tier projects after about 7 days without activity.
+# The weekly publication update runs right at that limit and keeps losing
+# the race, so ping the database every few days with one tiny query.
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query one publication id
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          status=$(curl -sS -o response.json -w '%{http_code}' --retry 3 --retry-delay 10 \
+            "${SUPABASE_URL%/}/rest/v1/publications?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_SECRET_KEY}" \
+            -H "Accept: application/json") || {
+              echo "::error::Could not reach Supabase. The project may be paused; restore it from the Supabase dashboard."
+              exit 1
+            }
+          if [ "$status" != "200" ]; then
+            echo "::error::Supabase returned HTTP $status"
+            cat response.json
+            exit 1
+          fi
+          echo "Supabase responded (HTTP $status)."
